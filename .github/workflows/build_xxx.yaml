@@ -57,8 +57,8 @@ jobs:
       - name: Deploy Nightly
         uses: WebFreak001/deploy-nightly@v3.1.0
         with:
-          upload_url: https://uploads.github.com/repos/ricardo-duarte-av/element-x-av/releases/180527698/assets{?name,label} # find out this value by opening https://api.github.com/repos/<owner>/<repo>/releases in your browser and copy the full "upload_url" value including the {?name,label} part
-          release_id: 180527698 # same as above (id can just be taken out the upload_url, it's used to find old releases)
+          upload_url: https://uploads.github.com/repos/elementx-av/element-x-android/releases/245303506/assets{?name,label} # find out this value by opening https://api.github.com/repos/<owner>/<repo>/releases in your browser and copy the full "upload_url" value including the {?name,label} part
+          release_id: 245303506 # same as above (id can just be taken out the upload_url, it's used to find old releases)
           asset_path: app/build/outputs/apk/gplay/nightly/app-gplay-arm64-v8a-nightly.apk # path to archive to upload
           asset_name: av-element-xxx-$$.apk # name to upload the release as, use $$ to insert date (YYYYMMDD) and 6 letter commit hash
           asset_content_type: application/vnd.android.package-archive # required by GitHub API
