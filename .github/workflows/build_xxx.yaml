@@ -1,4 +1,4 @@
-name: Create and Release AV nightly
+name: Create and Release XXX nightly
 on:
   # This can be used to automatically publish nightlies at UTC nighttime
   schedule:
@@ -8,7 +8,7 @@ on:
   pull_request:
   merge_group:
   push:
-    branches: [ main, develop ]
+    branches: [ main, develop, xxx ]
 
 env:
   GRADLE_OPTS: -Dorg.gradle.jvmargs=-Xmx9g -XX:MaxMetaspaceSize=512m -Dfile.encoding=UTF-8 -XX:+HeapDumpOnOutOfMemoryError -XX:+UseG1GC -Dkotlin.daemon.jvm.options=-Xmx4g
