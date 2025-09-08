@@ -1,4 +1,4 @@
-name: Create and Release AV nightly
+name: Create and Release XXX nightly
 on:
   # This can be used to automatically publish nightlies at UTC nighttime
   schedule:
