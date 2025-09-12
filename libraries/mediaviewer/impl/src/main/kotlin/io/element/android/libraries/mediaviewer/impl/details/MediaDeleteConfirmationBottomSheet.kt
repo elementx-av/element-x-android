@@ -120,7 +120,7 @@ private fun MediaRow(
                     modifier = Modifier
                         .fillMaxWidth()
                         .background(Color.White),
-                    model = MediaRequestData(state.thumbnailSource, MediaRequestData.Kind.Thumbnail(100)),
+                    model = MediaRequestData(state.thumbnailSource, MediaRequestData.Kind.Thumbnail(400)),
                     contentScale = ContentScale.Crop,
                     alignment = Alignment.Center,
                     contentDescription = null,
