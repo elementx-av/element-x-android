@@ -14,7 +14,7 @@ import io.element.android.libraries.architecture.AsyncAction
 import io.element.android.libraries.architecture.AsyncData
 import io.element.android.libraries.featureflag.ui.model.aFeatureUiModelList
 import io.element.android.libraries.matrix.api.tracing.TraceLogPack
-import kotlinx.collections.immutable.toPersistentList
+import kotlinx.collections.immutable.toImmutableList
 
 open class DeveloperSettingsStateProvider : PreviewParameterProvider<DeveloperSettingsState> {
     override val values: Sequence<DeveloperSettingsState>
@@ -28,6 +28,10 @@ open class DeveloperSettingsStateProvider : PreviewParameterProvider<DeveloperSe
                     baseUrl = "https://call.element.ahoy",
                 )
             ),
+            aDeveloperSettingsState(
+                isEnterpriseBuild = true,
+                showColorPicker = true,
+            ),
         )
 }
 
@@ -35,6 +39,8 @@ fun aDeveloperSettingsState(
     clearCacheAction: AsyncAction<Unit> = AsyncAction.Uninitialized,
     customElementCallBaseUrlState: CustomElementCallBaseUrlState = aCustomElementCallBaseUrlState(),
     traceLogPacks: List<TraceLogPack> = emptyList(),
+    isEnterpriseBuild: Boolean = false,
+    showColorPicker: Boolean = false,
     eventSink: (DeveloperSettingsEvents) -> Unit = {},
 ) = DeveloperSettingsState(
     features = aFeatureUiModelList(),
@@ -43,7 +49,9 @@ fun aDeveloperSettingsState(
     clearCacheAction = clearCacheAction,
     customElementCallBaseUrlState = customElementCallBaseUrlState,
     tracingLogLevel = AsyncData.Success(LogLevelItem.INFO),
-    tracingLogPacks = traceLogPacks.toPersistentList(),
+    tracingLogPacks = traceLogPacks.toImmutableList(),
+    isEnterpriseBuild = isEnterpriseBuild,
+    showColorPicker = showColorPicker,
     eventSink = eventSink,
 )
 

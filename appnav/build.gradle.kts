@@ -38,11 +38,13 @@ dependencies {
     implementation(projects.libraries.pushproviders.api)
     implementation(projects.libraries.designsystem)
     implementation(projects.libraries.matrixui)
+    implementation(projects.libraries.uiCommon)
     implementation(projects.libraries.uiStrings)
     implementation(projects.features.login.api)
 
     implementation(libs.coil)
 
+    implementation(projects.features.announcement.api)
     implementation(projects.features.ftue.api)
     implementation(projects.features.share.api)
 

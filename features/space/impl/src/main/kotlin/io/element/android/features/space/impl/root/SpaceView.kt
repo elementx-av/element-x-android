@@ -7,6 +7,7 @@
 
 package io.element.android.features.space.impl.root
 
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
@@ -32,6 +33,12 @@ import androidx.compose.ui.tooling.preview.PreviewParameter
 import androidx.compose.ui.unit.dp
 import io.element.android.compound.theme.ElementTheme
 import io.element.android.compound.tokens.generated.CompoundIcons
+import io.element.android.libraries.designsystem.atomic.molecules.InviteButtonsRowMolecule
+import io.element.android.libraries.designsystem.components.ClickableLinkText
+import io.element.android.libraries.designsystem.components.SimpleModalBottomSheet
+import io.element.android.libraries.designsystem.components.async.AsyncIndicator
+import io.element.android.libraries.designsystem.components.async.AsyncIndicatorHost
+import io.element.android.libraries.designsystem.components.async.rememberAsyncIndicatorState
 import io.element.android.libraries.designsystem.components.avatar.Avatar
 import io.element.android.libraries.designsystem.components.avatar.AvatarData
 import io.element.android.libraries.designsystem.components.avatar.AvatarSize
@@ -42,6 +49,7 @@ import io.element.android.libraries.designsystem.preview.PreviewsDayNight
 import io.element.android.libraries.designsystem.theme.components.CircularProgressIndicator
 import io.element.android.libraries.designsystem.theme.components.DropdownMenu
 import io.element.android.libraries.designsystem.theme.components.DropdownMenuItem
+import io.element.android.libraries.designsystem.theme.components.HorizontalDivider
 import io.element.android.libraries.designsystem.theme.components.Icon
 import io.element.android.libraries.designsystem.theme.components.IconButton
 import io.element.android.libraries.designsystem.theme.components.Scaffold
@@ -49,26 +57,30 @@ import io.element.android.libraries.designsystem.theme.components.Text
 import io.element.android.libraries.designsystem.theme.components.TopAppBar
 import io.element.android.libraries.matrix.api.room.CurrentUserMembership
 import io.element.android.libraries.matrix.api.spaces.SpaceRoom
+import io.element.android.libraries.matrix.ui.components.JoinButton
 import io.element.android.libraries.matrix.ui.components.SpaceHeaderView
 import io.element.android.libraries.matrix.ui.components.SpaceRoomItemView
 import io.element.android.libraries.matrix.ui.model.getAvatarData
 import io.element.android.libraries.ui.strings.CommonStrings
 import kotlinx.collections.immutable.toImmutableList
+import kotlinx.coroutines.delay
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun SpaceView(
     state: SpaceState,
     onBackClick: () -> Unit,
-    onLeaveSpaceClick: () -> Unit,
     onRoomClick: (spaceRoom: SpaceRoom) -> Unit,
     onShareSpace: () -> Unit,
+    onLeaveSpaceClick: () -> Unit,
     modifier: Modifier = Modifier,
+    acceptDeclineInviteView: @Composable () -> Unit,
 ) {
     Scaffold(
         modifier = modifier,
         topBar = {
             SpaceViewTopBar(
-                state = state,
+                currentSpace = state.currentSpace,
                 onBackClick = onBackClick,
                 onLeaveSpaceClick = onLeaveSpaceClick,
                 onShareSpace = onShareSpace,
@@ -80,17 +92,75 @@ fun SpaceView(
             ) {
                 SpaceViewContent(
                     state = state,
-                    onRoomClick = onRoomClick
+                    onRoomClick = onRoomClick,
+                    onTopicClick = { topic ->
+                        state.eventSink(SpaceEvents.ShowTopicViewer(topic))
+                    }
                 )
+                JoinRoomFailureEffect(
+                    hasAnyFailure = state.hasAnyFailure,
+                    eventSink = state.eventSink
+                )
+                acceptDeclineInviteView()
             }
         },
     )
+    if (state.topicViewerState is TopicViewerState.Shown) {
+        TopicViewerBottomSheet(
+            topicViewerState = state.topicViewerState,
+            onDismiss = {
+                state.eventSink(SpaceEvents.HideTopicViewer)
+            }
+        )
+    }
+}
+
+@Composable
+private fun JoinRoomFailureEffect(
+    hasAnyFailure: Boolean,
+    eventSink: (SpaceEvents) -> Unit,
+) {
+    val asyncIndicatorState = rememberAsyncIndicatorState()
+    val updatedEventSink by rememberUpdatedState(eventSink)
+    AsyncIndicatorHost(modifier = Modifier, asyncIndicatorState)
+    LaunchedEffect(hasAnyFailure) {
+        if (hasAnyFailure) {
+            asyncIndicatorState.enqueue {
+                AsyncIndicator.Failure(text = stringResource(CommonStrings.common_something_went_wrong))
+            }
+            delay(AsyncIndicator.DURATION_SHORT)
+            updatedEventSink(SpaceEvents.ClearFailures)
+        } else {
+            asyncIndicatorState.clear()
+        }
+    }
+}
+
+@Composable
+private fun TopicViewerBottomSheet(
+    topicViewerState: TopicViewerState.Shown,
+    onDismiss: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    SimpleModalBottomSheet(
+        title = stringResource(CommonStrings.common_description),
+        onDismiss = onDismiss,
+        modifier = modifier
+    ) {
+        ClickableLinkText(
+            text = topicViewerState.topic,
+            interactionSource = remember { MutableInteractionSource() },
+            style = ElementTheme.typography.fontBodyMdRegular,
+            color = ElementTheme.colors.textSecondary,
+        )
+    }
 }
 
 @Composable
 private fun SpaceViewContent(
     state: SpaceState,
     onRoomClick: (spaceRoom: SpaceRoom) -> Unit,
+    onTopicClick: (String) -> Unit,
     modifier: Modifier = Modifier,
 ) {
     LazyColumn(modifier.fillMaxSize()) {
@@ -99,18 +169,23 @@ private fun SpaceViewContent(
             item {
                 SpaceHeaderView(
                     avatarData = currentSpace.getAvatarData(AvatarSize.SpaceHeader),
-                    name = currentSpace.name,
+                    name = currentSpace.displayName,
                     topic = currentSpace.topic,
-                    joinRule = currentSpace.joinRule,
+                    topicMaxLines = 2,
+                    visibility = currentSpace.visibility,
                     heroes = currentSpace.heroes.toImmutableList(),
                     numberOfMembers = currentSpace.numJoinedMembers,
-                    numberOfRooms = currentSpace.childrenCount,
+                    onTopicClick = onTopicClick
                 )
+            }
+            item {
+                HorizontalDivider()
             }
         }
         state.children.forEach { spaceRoom ->
             item {
                 val isInvitation = spaceRoom.state == CurrentUserMembership.INVITED
+                val isCurrentlyJoining = state.isJoining(spaceRoom.roomId)
                 SpaceRoomItemView(
                     spaceRoom = spaceRoom,
                     showUnreadIndicator = isInvitation && spaceRoom.roomId !in state.seenSpaceInvites,
@@ -120,7 +195,18 @@ private fun SpaceViewContent(
                     },
                     onLongClick = {
                         // TODO
-                    }
+                    },
+                    trailingAction = spaceRoom.trailingAction(isCurrentlyJoining = isCurrentlyJoining) {
+                        state.eventSink(SpaceEvents.Join(spaceRoom))
+                    },
+                    bottomAction = spaceRoom.inviteButtons(
+                        onAcceptClick = {
+                            state.eventSink(SpaceEvents.AcceptInvite(spaceRoom))
+                        },
+                        onDeclineClick = {
+                            state.eventSink(SpaceEvents.DeclineInvite(spaceRoom))
+                        }
+                    )
                 )
             }
         }
@@ -155,13 +241,12 @@ private fun LoadingMoreIndicator(
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun SpaceViewTopBar(
-    state: SpaceState,
+    currentSpace: SpaceRoom?,
     onBackClick: () -> Unit,
-    @Suppress("unused") onLeaveSpaceClick: () -> Unit,
+    onLeaveSpaceClick: () -> Unit,
     onShareSpace: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    val currentSpace = state.currentSpace
     TopAppBar(
         modifier = modifier,
         navigationIcon = {
@@ -170,7 +255,7 @@ private fun SpaceViewTopBar(
         title = {
             if (currentSpace != null) {
                 SpaceAvatarAndNameRow(
-                    name = currentSpace.name,
+                    name = currentSpace.displayName,
                     avatarData = currentSpace.getAvatarData(AvatarSize.TimelineRoom),
                 )
             }
@@ -203,23 +288,25 @@ private fun SpaceViewTopBar(
                         )
                     }
                 )
-                /*
-                // TODO re-enable when we have SDK APIs to leave a space
                 DropdownMenuItem(
                     onClick = {
                         showMenu = false
                         onLeaveSpaceClick()
                     },
-                    text = { Text(stringResource(id = CommonStrings.action_leave)) },
+                    text = {
+                        Text(
+                            text = stringResource(id = CommonStrings.action_leave),
+                            color = ElementTheme.colors.textCriticalPrimary,
+                        )
+                    },
                     leadingIcon = {
                         Icon(
                             imageVector = CompoundIcons.Leave(),
-                            tint = ElementTheme.colors.iconSecondary,
+                            tint = ElementTheme.colors.iconCriticalPrimary,
                             contentDescription = null,
                         )
                     }
                 )
-                 */
             }
         },
     )
@@ -254,6 +341,40 @@ private fun SpaceAvatarAndNameRow(
     }
 }
 
+private fun SpaceRoom.trailingAction(
+    isCurrentlyJoining: Boolean,
+    onClick: () -> Unit
+): @Composable (() -> Unit)? {
+    return when (state) {
+        null, CurrentUserMembership.LEFT -> {
+            {
+                JoinButton(
+                    showProgress = isCurrentlyJoining,
+                    onClick = onClick,
+                )
+            }
+        }
+        else -> null
+    }
+}
+
+private fun SpaceRoom.inviteButtons(
+    onAcceptClick: () -> Unit,
+    onDeclineClick: () -> Unit,
+): @Composable (() -> Unit)? {
+    return when (state) {
+        CurrentUserMembership.INVITED -> {
+            @Composable {
+                InviteButtonsRowMolecule(
+                    onAcceptClick = onAcceptClick,
+                    onDeclineClick = onDeclineClick,
+                )
+            }
+        }
+        else -> null
+    }
+}
+
 @PreviewsDayNight
 @Composable
 internal fun SpaceViewPreview(
@@ -261,9 +382,10 @@ internal fun SpaceViewPreview(
 ) = ElementPreview {
     SpaceView(
         state = state,
-        onBackClick = {},
-        onLeaveSpaceClick = {},
         onRoomClick = {},
         onShareSpace = {},
+        onLeaveSpaceClick = {},
+        acceptDeclineInviteView = {},
+        onBackClick = {},
     )
 }

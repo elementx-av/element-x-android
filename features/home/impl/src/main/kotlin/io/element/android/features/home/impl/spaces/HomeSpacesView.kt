@@ -14,6 +14,7 @@ import androidx.compose.ui.tooling.preview.PreviewParameter
 import io.element.android.libraries.designsystem.components.avatar.AvatarSize
 import io.element.android.libraries.designsystem.preview.ElementPreview
 import io.element.android.libraries.designsystem.preview.PreviewsDayNight
+import io.element.android.libraries.designsystem.theme.components.HorizontalDivider
 import io.element.android.libraries.matrix.api.core.RoomId
 import io.element.android.libraries.matrix.api.room.CurrentUserMembership
 import io.element.android.libraries.matrix.ui.components.SpaceHeaderRootView
@@ -33,24 +34,22 @@ fun HomeSpacesView(
         when (space) {
             CurrentSpace.Root -> {
                 item {
-                    SpaceHeaderRootView(
-                        numberOfSpaces = state.spaceRooms.size,
-                        // TODO
-                        numberOfRooms = 0,
-                    )
+                    SpaceHeaderRootView(numberOfSpaces = state.spaceRooms.size)
                 }
             }
             is CurrentSpace.Space -> item {
                 SpaceHeaderView(
                     avatarData = space.spaceRoom.getAvatarData(AvatarSize.SpaceHeader),
-                    name = space.spaceRoom.name,
+                    name = space.spaceRoom.displayName,
                     topic = space.spaceRoom.topic,
-                    joinRule = space.spaceRoom.joinRule,
+                    visibility = space.spaceRoom.visibility,
                     heroes = space.spaceRoom.heroes.toImmutableList(),
                     numberOfMembers = space.spaceRoom.numJoinedMembers,
-                    numberOfRooms = space.spaceRoom.childrenCount,
                 )
             }
+        }
+        item {
+            HorizontalDivider()
         }
         state.spaceRooms.forEach { spaceRoom ->
             item(spaceRoom.roomId) {
@@ -64,7 +63,7 @@ fun HomeSpacesView(
                     },
                     onLongClick = {
                         // TODO
-                    }
+                    },
                 )
             }
         }

@@ -9,7 +9,10 @@
 
 package io.element.android.features.preferences.impl.developer
 
+import androidx.compose.ui.graphics.Color
 import com.google.common.truth.Truth.assertThat
+import io.element.android.features.enterprise.api.EnterpriseService
+import io.element.android.features.enterprise.test.FakeEnterpriseService
 import io.element.android.features.preferences.impl.developer.tracing.LogLevelItem
 import io.element.android.features.preferences.impl.tasks.FakeClearCacheUseCase
 import io.element.android.features.preferences.impl.tasks.FakeComputeCacheSizeUseCase
@@ -19,10 +22,13 @@ import io.element.android.libraries.architecture.AsyncData
 import io.element.android.libraries.core.meta.BuildMeta
 import io.element.android.libraries.core.meta.BuildType
 import io.element.android.libraries.featureflag.api.FeatureFlags
+import io.element.android.libraries.featureflag.test.FakeFeature
 import io.element.android.libraries.featureflag.test.FakeFeatureFlagService
 import io.element.android.libraries.matrix.test.core.aBuildMeta
 import io.element.android.libraries.preferences.test.InMemoryAppPreferencesStore
 import io.element.android.tests.testutils.WarmUpRule
+import io.element.android.tests.testutils.lambda.lambdaRecorder
+import io.element.android.tests.testutils.lambda.value
 import io.element.android.tests.testutils.test
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.runTest
@@ -35,7 +41,16 @@ class DeveloperSettingsPresenterTest {
 
     @Test
     fun `present - ensures initial states are correct`() = runTest {
-        val presenter = createDeveloperSettingsPresenter()
+        val availableFeatures = listOf(
+            FakeFeature(
+                key = "feature_1",
+                title = "Feature 1",
+                isInLabs = false,
+            )
+        )
+        val presenter = createDeveloperSettingsPresenter(
+            featureFlagService = FakeFeatureFlagService(providedAvailableFeatures = availableFeatures)
+        )
         presenter.test {
             awaitItem().also { state ->
                 assertThat(state.features).isEmpty()
@@ -47,11 +62,12 @@ class DeveloperSettingsPresenterTest {
                 assertThat(state.rageshakeState.isSupported).isTrue()
                 assertThat(state.rageshakeState.sensitivity).isEqualTo(0.3f)
                 assertThat(state.tracingLogLevel).isEqualTo(AsyncData.Uninitialized)
+                assertThat(state.isEnterpriseBuild).isFalse()
+                assertThat(state.showColorPicker).isFalse()
             }
             awaitItem().also { state ->
                 assertThat(state.features).isNotEmpty()
-                val numberOfModifiableFeatureFlags = FeatureFlags.entries.count { it.isFinished.not() }
-                assertThat(state.features).hasSize(numberOfModifiableFeatureFlags)
+                assertThat(state.features).hasSize(1)
                 assertThat(state.tracingLogLevel.dataOrNull()).isEqualTo(LogLevelItem.INFO)
             }
             awaitItem().also { state ->
@@ -161,12 +177,82 @@ class DeveloperSettingsPresenterTest {
         }
     }
 
+    @Test
+    fun `present - enterprise build can change the brand color`() = runTest {
+        val overrideBrandColorResult = lambdaRecorder<String?, Unit> { }
+        val presenter = createDeveloperSettingsPresenter(
+            enterpriseService = FakeEnterpriseService(
+                isEnterpriseBuild = true,
+                overrideBrandColorResult = overrideBrandColorResult,
+            )
+        )
+        presenter.test {
+            skipItems(1)
+            val initialState = awaitItem()
+            assertThat(initialState.isEnterpriseBuild).isTrue()
+            initialState.eventSink(DeveloperSettingsEvents.SetShowColorPicker(true))
+            assertThat(awaitItem().showColorPicker).isTrue()
+            initialState.eventSink(DeveloperSettingsEvents.SetShowColorPicker(false))
+            assertThat(awaitItem().showColorPicker).isFalse()
+            initialState.eventSink(DeveloperSettingsEvents.SetShowColorPicker(true))
+            assertThat(awaitItem().showColorPicker).isTrue()
+            initialState.eventSink(DeveloperSettingsEvents.ChangeBrandColor(Color.Green))
+            assertThat(awaitItem().showColorPicker).isFalse()
+            overrideBrandColorResult.assertions().isCalledOnce()
+                .with(value("00FF00"))
+        }
+    }
+
+    @Test
+    fun `present - won't display features in labs or finished`() = runTest {
+        val availableFeatures = listOf(
+            // Only this feature should be displayed
+            FakeFeature(
+                key = "feature_1",
+                title = "Feature 1",
+                isInLabs = false,
+            ),
+            FakeFeature(
+                key = "feature_2",
+                title = "Feature 2",
+                isInLabs = true,
+            ),
+            FakeFeature(
+                key = "feature_3",
+                title = "Feature 3",
+                isInLabs = false,
+                isFinished = true,
+            )
+        )
+
+        val presenter = createDeveloperSettingsPresenter(
+            featureFlagService = FakeFeatureFlagService(
+                providedAvailableFeatures = availableFeatures,
+            )
+        )
+        presenter.test {
+            skipItems(2)
+            awaitItem().also { state ->
+                assertThat(state.features).hasSize(1)
+            }
+        }
+    }
+
     private fun createDeveloperSettingsPresenter(
-        featureFlagService: FakeFeatureFlagService = FakeFeatureFlagService(),
+        featureFlagService: FakeFeatureFlagService = FakeFeatureFlagService(
+            providedAvailableFeatures = listOf(
+                FakeFeature(
+                    key = "feature_1",
+                    title = "Feature 1",
+                    isInLabs = false,
+                )
+            )
+        ),
         cacheSizeUseCase: FakeComputeCacheSizeUseCase = FakeComputeCacheSizeUseCase(),
         clearCacheUseCase: FakeClearCacheUseCase = FakeClearCacheUseCase(),
         preferencesStore: InMemoryAppPreferencesStore = InMemoryAppPreferencesStore(),
         buildMeta: BuildMeta = aBuildMeta(),
+        enterpriseService: EnterpriseService = FakeEnterpriseService(),
     ): DeveloperSettingsPresenter {
         return DeveloperSettingsPresenter(
             featureFlagService = featureFlagService,
@@ -175,6 +261,7 @@ class DeveloperSettingsPresenterTest {
             rageshakePresenter = { aRageshakePreferencesState() },
             appPreferencesStore = preferencesStore,
             buildMeta = buildMeta,
+            enterpriseService = enterpriseService,
         )
     }
 }

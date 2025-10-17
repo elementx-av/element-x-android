@@ -15,7 +15,7 @@ import io.element.android.libraries.matrix.api.spaces.SpaceRoom
 import io.element.android.libraries.previewutils.room.aSpaceRoom
 import kotlinx.collections.immutable.ImmutableList
 import kotlinx.collections.immutable.persistentListOf
-import kotlinx.collections.immutable.toPersistentList
+import kotlinx.collections.immutable.toImmutableList
 
 class LeaveSpaceStateProvider : PreviewParameterProvider<LeaveSpaceState> {
     override val values: Sequence<LeaveSpaceState>
@@ -30,7 +30,7 @@ class LeaveSpaceStateProvider : PreviewParameterProvider<LeaveSpaceState> {
                     persistentListOf(
                         aSelectableSpaceRoom(
                             spaceRoom = aSpaceRoom(
-                                name = "A long space name that should be truncated",
+                                displayName = "A long space name that should be truncated",
                                 worldReadable = true,
                             ),
                             isLastAdmin = true,
@@ -92,28 +92,33 @@ class LeaveSpaceStateProvider : PreviewParameterProvider<LeaveSpaceState> {
             ),
             aLeaveSpaceState(
                 selectableSpaceRooms = AsyncData.Success(
-                    List(10) { aSelectableSpaceRoom() }.toPersistentList()
+                    List(10) { aSelectableSpaceRoom() }.toImmutableList()
                 ),
                 leaveSpaceAction = AsyncAction.Loading,
             ),
             aLeaveSpaceState(
                 selectableSpaceRooms = AsyncData.Success(
-                    List(10) { aSelectableSpaceRoom() }.toPersistentList()
+                    List(10) { aSelectableSpaceRoom() }.toImmutableList()
                 ),
                 leaveSpaceAction = AsyncAction.Failure(Exception("An error")),
             ),
             aLeaveSpaceState(
                 selectableSpaceRooms = AsyncData.Failure(Exception("An error")),
             ),
+            aLeaveSpaceState(
+                isLastAdmin = true,
+            ),
         )
 }
 
 fun aLeaveSpaceState(
     spaceName: String? = "Space name",
+    isLastAdmin: Boolean = false,
     selectableSpaceRooms: AsyncData<ImmutableList<SelectableSpaceRoom>> = AsyncData.Uninitialized,
     leaveSpaceAction: AsyncAction<Unit> = AsyncAction.Uninitialized,
 ) = LeaveSpaceState(
     spaceName = spaceName,
+    isLastAdmin = isLastAdmin,
     selectableSpaceRooms = selectableSpaceRooms,
     leaveSpaceAction = leaveSpaceAction,
     eventSink = { }

@@ -7,8 +7,11 @@
 
 package io.element.android.libraries.matrix.impl.spaces
 
+import io.element.android.libraries.core.coroutine.childScope
 import io.element.android.libraries.core.extensions.runCatchingExceptions
 import io.element.android.libraries.matrix.api.core.RoomId
+import io.element.android.libraries.matrix.api.room.RoomMembershipObserver
+import io.element.android.libraries.matrix.api.spaces.LeaveSpaceHandle
 import io.element.android.libraries.matrix.api.spaces.SpaceRoom
 import io.element.android.libraries.matrix.api.spaces.SpaceRoomList
 import io.element.android.libraries.matrix.api.spaces.SpaceService
@@ -36,6 +39,7 @@ class RustSpaceService(
     private val innerSpaceService: ClientSpaceService,
     private val sessionCoroutineScope: CoroutineScope,
     private val sessionDispatcher: CoroutineDispatcher,
+    private val roomMembershipObserver: RoomMembershipObserver,
 ) : SpaceService {
     private val spaceRoomMapper = SpaceRoomMapper()
     override val spaceRoomsFlow = MutableSharedFlow<List<SpaceRoom>>(replay = 1, extraBufferCapacity = 1)
@@ -54,11 +58,24 @@ class RustSpaceService(
     }
 
     override fun spaceRoomList(id: RoomId): SpaceRoomList {
+        val childCoroutineScope = sessionCoroutineScope.childScope(sessionDispatcher, "SpaceRoomListScope-$this")
         return RustSpaceRoomList(
+            roomId = id,
             innerProvider = { innerSpaceService.spaceRoomList(id.value) },
-            sessionCoroutineScope = sessionCoroutineScope,
+            coroutineScope = childCoroutineScope,
             spaceRoomMapper = spaceRoomMapper,
         )
+    }
+
+    override fun getLeaveSpaceHandle(spaceId: RoomId): LeaveSpaceHandle {
+        return RustLeaveSpaceHandle(
+            id = spaceId,
+            spaceRoomMapper = spaceRoomMapper,
+            roomMembershipObserver = roomMembershipObserver,
+            sessionCoroutineScope = sessionCoroutineScope,
+        ) {
+            innerSpaceService.leaveSpace(spaceId.value)
+        }
     }
 
     init {

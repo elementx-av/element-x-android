@@ -35,7 +35,7 @@ import io.element.android.libraries.matrix.api.verification.SessionVerificationS
 import io.element.android.libraries.sessionstorage.api.SessionStore
 import io.element.android.services.analytics.api.AnalyticsService
 import kotlinx.collections.immutable.persistentListOf
-import kotlinx.collections.immutable.toPersistentList
+import kotlinx.collections.immutable.toImmutableList
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.map
@@ -80,7 +80,7 @@ class PreferencesRootPresenter(
                             avatarUrl = it.userAvatarUrl,
                         )
                     }
-                    .toPersistentList()
+                    .toImmutableList()
             }
         }.collectAsState(initial = persistentListOf())
 
@@ -111,6 +111,8 @@ class PreferencesRootPresenter(
                 .onEach { value = it.isNotEmpty() }
                 .launchIn(this)
         }
+
+        val showLabsItem = remember { featureFlagService.getAvailableFeatures().any { it.isInLabs && !it.isFinished } }
 
         val directLogoutState = directLogoutPresenter.present()
 
@@ -146,6 +148,7 @@ class PreferencesRootPresenter(
             showDeveloperSettings = showDeveloperSettings,
             canDeactivateAccount = canDeactivateAccount,
             showBlockedUsersItem = showBlockedUsersItem,
+            showLabsItem = showLabsItem,
             directLogoutState = directLogoutState,
             snackbarMessage = snackbarMessage,
             eventSink = ::handleEvent,

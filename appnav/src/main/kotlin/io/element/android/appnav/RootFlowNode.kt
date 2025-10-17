@@ -11,15 +11,11 @@ import android.content.Intent
 import android.os.Parcelable
 import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.spring
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.Composable
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.lifecycle.lifecycleScope
 import com.bumble.appyx.core.modality.BuildContext
 import com.bumble.appyx.core.node.Node
-import com.bumble.appyx.core.node.node
 import com.bumble.appyx.core.plugin.Plugin
 import com.bumble.appyx.core.state.MutableSavedStateMap
 import com.bumble.appyx.navmodel.backstack.BackStack
@@ -38,6 +34,7 @@ import io.element.android.appnav.intent.ResolvedIntent
 import io.element.android.appnav.root.RootNavStateFlowFactory
 import io.element.android.appnav.root.RootPresenter
 import io.element.android.appnav.root.RootView
+import io.element.android.features.announcement.api.AnnouncementService
 import io.element.android.features.login.api.LoginParams
 import io.element.android.features.login.api.accesscontrol.AccountProviderAccessControl
 import io.element.android.features.rageshake.api.bugreport.BugReportEntryPoint
@@ -51,7 +48,6 @@ import io.element.android.libraries.architecture.createNode
 import io.element.android.libraries.architecture.waitForChildAttached
 import io.element.android.libraries.core.uri.ensureProtocol
 import io.element.android.libraries.deeplink.api.DeeplinkData
-import io.element.android.libraries.designsystem.theme.components.CircularProgressIndicator
 import io.element.android.libraries.featureflag.api.FeatureFlagService
 import io.element.android.libraries.featureflag.api.FeatureFlags
 import io.element.android.libraries.matrix.api.core.SessionId
@@ -61,6 +57,7 @@ import io.element.android.libraries.oidc.api.OidcAction
 import io.element.android.libraries.oidc.api.OidcActionFlow
 import io.element.android.libraries.sessionstorage.api.LoggedInState
 import io.element.android.libraries.sessionstorage.api.SessionStore
+import io.element.android.libraries.ui.common.nodes.emptyNode
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
@@ -68,7 +65,9 @@ import kotlinx.coroutines.launch
 import kotlinx.parcelize.Parcelize
 import timber.log.Timber
 
-@ContributesNode(AppScope::class) @AssistedInject class RootFlowNode(
+@ContributesNode(AppScope::class)
+@AssistedInject
+class RootFlowNode(
     @Assisted val buildContext: BuildContext,
     @Assisted plugins: List<Plugin>,
     private val sessionStore: SessionStore,
@@ -83,6 +82,7 @@ import timber.log.Timber
     private val oidcActionFlow: OidcActionFlow,
     private val bugReporter: BugReporter,
     private val featureFlagService: FeatureFlagService,
+    private val announcementService: AnnouncementService,
 ) : BaseFlowNode<RootFlowNode.NavTarget>(
     backstack = BackStack(
         initialElement = NavTarget.SplashScreen,
@@ -189,6 +189,7 @@ import timber.log.Timber
                 }
             }
             BackstackView(transitionHandler = transitionHandler)
+            announcementService.Render(Modifier)
         }
     }
 
@@ -219,9 +220,10 @@ import timber.log.Timber
     override fun resolve(navTarget: NavTarget, buildContext: BuildContext): Node {
         return when (navTarget) {
             is NavTarget.LoggedInFlow -> {
-                val matrixClient = matrixSessionCache.getOrNull(navTarget.sessionId) ?: return splashNode(buildContext).also {
-                    Timber.w("Couldn't find any session, go through SplashScreen")
-                }
+                val matrixClient = matrixSessionCache.getOrNull(navTarget.sessionId)
+                    ?: return emptyNode(buildContext).also {
+                        Timber.w("Couldn't find any session, go through SplashScreen")
+                    }
                 val inputs = LoggedInAppScopeFlowNode.Inputs(matrixClient)
                 val callback = object : LoggedInAppScopeFlowNode.Callback {
                     override fun onOpenBugReport() {
@@ -252,7 +254,7 @@ import timber.log.Timber
                     )
                 ).build()
             }
-            NavTarget.SplashScreen -> splashNode(buildContext)
+            NavTarget.SplashScreen -> emptyNode(buildContext)
             NavTarget.BugReport -> {
                 val callback = object : BugReportEntryPoint.Callback {
                     override fun onDone() {
@@ -286,12 +288,6 @@ import timber.log.Timber
                 }
                 accountSelectEntryPoint.nodeBuilder(this, buildContext).callback(callback).build()
             }
-        }
-    }
-
-    private fun splashNode(buildContext: BuildContext) = node(buildContext) {
-        Box(modifier = it.fillMaxSize(), contentAlignment = Alignment.Center) {
-            CircularProgressIndicator()
         }
     }
 

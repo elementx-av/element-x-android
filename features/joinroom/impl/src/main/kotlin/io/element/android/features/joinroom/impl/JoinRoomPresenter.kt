@@ -39,8 +39,6 @@ import io.element.android.libraries.core.meta.BuildMeta
 import io.element.android.libraries.matrix.api.MatrixClient
 import io.element.android.libraries.matrix.api.core.RoomId
 import io.element.android.libraries.matrix.api.core.RoomIdOrAlias
-import io.element.android.libraries.matrix.api.exception.ClientException
-import io.element.android.libraries.matrix.api.exception.ErrorKind
 import io.element.android.libraries.matrix.api.room.CurrentUserMembership
 import io.element.android.libraries.matrix.api.room.RoomInfo
 import io.element.android.libraries.matrix.api.room.RoomMembershipDetails
@@ -53,7 +51,7 @@ import io.element.android.libraries.matrix.api.spaces.SpaceRoom
 import io.element.android.libraries.matrix.ui.model.toInviteSender
 import io.element.android.libraries.matrix.ui.safety.rememberHideInvitesAvatar
 import kotlinx.collections.immutable.persistentListOf
-import kotlinx.collections.immutable.toPersistentList
+import kotlinx.collections.immutable.toImmutableList
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 import java.util.Optional
@@ -141,11 +139,7 @@ class JoinRoomPresenter(
                             preview.previewInfo.toContentState(membershipDetails)
                         },
                         onFailure = { throwable ->
-                            if (throwable is ClientException.MatrixApi && (throwable.kind == ErrorKind.NotFound || throwable.kind == ErrorKind.Forbidden)) {
-                                ContentState.UnknownRoom
-                            } else {
-                                ContentState.Failure(throwable)
-                            }
+                            ContentState.UnknownRoom
                         }
                     )
                 }
@@ -277,7 +271,7 @@ private fun RoomPreviewInfo.toContentState(membershipDetails: RoomMembershipDeta
 private fun SpaceRoom.toContentState(): ContentState {
     return ContentState.Loaded(
         roomId = roomId,
-        name = name,
+        name = displayName,
         topic = topic,
         alias = canonicalAlias,
         numberOfMembers = numJoinedMembers.toLong(),
@@ -291,7 +285,7 @@ private fun SpaceRoom.toContentState(): ContentState {
         joinRule = joinRule,
         details = LoadedDetails.Space(
             childrenCount = childrenCount,
-            heroes = heroes.toPersistentList(),
+            heroes = heroes.toImmutableList(),
         )
     )
 }

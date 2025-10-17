@@ -8,7 +8,7 @@ import extension.testCommonDependencies
  * Please see LICENSE files in the repository root for full details.
  */
 plugins {
-    id("io.element.android-library")
+    id("io.element.android-compose-library")
 }
 
 android {
@@ -18,7 +18,7 @@ android {
 setupDependencyInjection()
 
 dependencies {
-    implementation(libs.compound)
+    implementation(projects.libraries.compound)
     api(projects.features.enterprise.api)
     implementation(projects.libraries.architecture)
     implementation(projects.libraries.matrix.api)

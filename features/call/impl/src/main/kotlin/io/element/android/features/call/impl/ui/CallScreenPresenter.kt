@@ -64,6 +64,7 @@ class CallScreenPresenter(
     private val appForegroundStateService: AppForegroundStateService,
     @AppCoroutineScope
     private val appCoroutineScope: CoroutineScope,
+    private val widgetMessageSerializer: WidgetMessageSerializer,
 ) : Presenter<CallScreenState> {
     @AssistedFactory
     interface Factory {
@@ -242,7 +243,7 @@ class CallScreenPresenter(
             }
             coroutineScope.launch {
                 Timber.d("Observing sync state in-call for sessionId: ${roomCallType.sessionId}")
-                client.syncService().syncState
+                client.syncService.syncState
                     .collect { state ->
                         if (state != SyncState.Running) {
                             appForegroundStateService.updateIsInCallState(true)
@@ -258,7 +259,7 @@ class CallScreenPresenter(
     }
 
     private fun parseMessage(message: String): WidgetMessage? {
-        return WidgetMessageSerializer.deserialize(message).getOrNull()
+        return widgetMessageSerializer.deserialize(message).getOrNull()
     }
 
     private fun sendHangupMessage(widgetId: String, messageInterceptor: WidgetMessageInterceptor) {
@@ -269,7 +270,7 @@ class CallScreenPresenter(
             action = WidgetMessage.Action.HangUp,
             data = null,
         )
-        messageInterceptor.sendMessage(WidgetMessageSerializer.serialize(message))
+        messageInterceptor.sendMessage(widgetMessageSerializer.serialize(message))
     }
 
     private fun CoroutineScope.close(widgetDriver: MatrixWidgetDriver?, navigator: CallScreenNavigator) = launch(dispatchers.io) {
