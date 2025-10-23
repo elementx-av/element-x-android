@@ -20,6 +20,7 @@ lifecycle = "2.9.2"
 activity = "1.11.0"
 media3 = "1.8.0"
 camera = "1.5.1"
+work = "2.10.5"
 
 # Compose
 compose_bom = "2025.07.00"
@@ -49,10 +50,10 @@ telephoto = "0.18.0"
 haze = "1.6.10"
 
 # Dependency analysis
-dependencyAnalysis = "3.1.0"
+dependencyAnalysis = "3.2.0"
 
 # DI
-metro = "0.6.10"
+metro = "0.7.2"
 
 # Auto service
 autoservice = "1.1.1"
@@ -94,6 +95,7 @@ androidx_camera_lifecycle = { module = "androidx.camera:camera-lifecycle", versi
 androidx_camera_view = { module = "androidx.camera:camera-view", version.ref = "camera" }
 androidx_camera_camera2 = { module = "androidx.camera:camera-camera2", version.ref = "camera" }
 androidx_javascriptengine = "androidx.javascriptengine:javascriptengine:1.0.0"
+androidx_workmanager_runtime = { module = "androidx.work:work-runtime-ktx", version.ref = "work" }
 
 androidx_recyclerview = "androidx.recyclerview:recyclerview:1.4.0"
 androidx_browser = "androidx.browser:browser:1.9.0"
@@ -208,8 +210,8 @@ haze_materials = { module = "dev.chrisbanes.haze:haze-materials", version.ref = 
 color_picker = "io.mhssn:colorpicker:1.0.0"
 
 # Analytics
-posthog = "com.posthog:posthog-android:3.23.0"
-sentry = "io.sentry:sentry-android:8.23.0"
+posthog = "com.posthog:posthog-android:3.24.0"
+sentry = "io.sentry:sentry-android:8.24.0"
 # main branch can be tested replacing the version with main-SNAPSHOT
 matrix_analytics_events = "com.github.matrix-org:matrix-analytics-events:0.28.0"
 
@@ -256,7 +258,7 @@ roborazzi = { id = "io.github.takahirom.roborazzi", version.ref = "roborazzi" }
 sqldelight = { id = "app.cash.sqldelight", version.ref = "sqldelight" }
 firebaseAppDistribution = { id = "com.google.firebase.appdistribution", version.ref = "firebaseAppDistribution" }
 knit = { id = "org.jetbrains.kotlinx.knit", version = "0.5.0" }
-sonarqube = "org.sonarqube:6.3.1.5724"
+sonarqube = "org.sonarqube:7.0.0.6105"
 licensee = "app.cash.licensee:1.14.1"
 compose-compiler = { id = "org.jetbrains.kotlin.plugin.compose", version.ref = "kotlin" }
 gms_google_services = { id = "com.google.gms.google-services", version = "4.4.4" }
