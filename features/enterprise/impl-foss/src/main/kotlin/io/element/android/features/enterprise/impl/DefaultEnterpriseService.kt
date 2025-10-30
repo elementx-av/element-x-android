@@ -7,9 +7,9 @@
 
 package io.element.android.features.enterprise.impl
 
+import androidx.compose.ui.graphics.Color
 import dev.zacsweers.metro.AppScope
 import dev.zacsweers.metro.ContributesBinding
-import dev.zacsweers.metro.Inject
 import io.element.android.compound.colors.SemanticColorsLightDark
 import io.element.android.features.enterprise.api.BugReportUrl
 import io.element.android.features.enterprise.api.EnterpriseService
@@ -18,7 +18,6 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flowOf
 
 @ContributesBinding(AppScope::class)
-@Inject
 class DefaultEnterpriseService : EnterpriseService {
     override val isEnterpriseBuild = false
 
@@ -28,6 +27,10 @@ class DefaultEnterpriseService : EnterpriseService {
     override suspend fun isAllowedToConnectToHomeserver(homeserverUrl: String) = true
 
     override suspend fun overrideBrandColor(sessionId: SessionId?, brandColor: String?) = Unit
+
+    override fun brandColorsFlow(sessionId: SessionId?): Flow<Color?> {
+        return flowOf(null)
+    }
 
     override fun semanticColorsFlow(sessionId: SessionId?): Flow<SemanticColorsLightDark> {
         return flowOf(SemanticColorsLightDark.default)
