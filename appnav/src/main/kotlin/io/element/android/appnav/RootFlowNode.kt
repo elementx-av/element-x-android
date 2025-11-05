@@ -31,6 +31,7 @@ import io.element.android.annotations.ContributesNode
 import io.element.android.appnav.di.MatrixSessionCache
 import io.element.android.appnav.intent.IntentResolver
 import io.element.android.appnav.intent.ResolvedIntent
+import io.element.android.appnav.room.RoomFlowNode
 import io.element.android.appnav.root.RootNavStateFlowFactory
 import io.element.android.appnav.root.RootPresenter
 import io.element.android.appnav.root.RootView
@@ -49,7 +50,10 @@ import io.element.android.libraries.core.uri.ensureProtocol
 import io.element.android.libraries.deeplink.api.DeeplinkData
 import io.element.android.libraries.featureflag.api.FeatureFlagService
 import io.element.android.libraries.featureflag.api.FeatureFlags
+import io.element.android.libraries.matrix.api.core.EventId
 import io.element.android.libraries.matrix.api.core.SessionId
+import io.element.android.libraries.matrix.api.core.ThreadId
+import io.element.android.libraries.matrix.api.core.asEventId
 import io.element.android.libraries.matrix.api.core.toRoomIdOrAlias
 import io.element.android.libraries.matrix.api.permalink.PermalinkData
 import io.element.android.libraries.oidc.api.OidcAction
@@ -223,11 +227,11 @@ class RootFlowNode(
                     }
                 val inputs = LoggedInAppScopeFlowNode.Inputs(matrixClient)
                 val callback = object : LoggedInAppScopeFlowNode.Callback {
-                    override fun onOpenBugReport() {
+                    override fun navigateToBugReport() {
                         backstack.push(NavTarget.BugReport)
                     }
 
-                    override fun onAddAccount() {
+                    override fun navigateToAddAccount() {
                         backstack.push(NavTarget.NotLoggedInFlow(null))
                     }
                 }
@@ -235,7 +239,7 @@ class RootFlowNode(
             }
             is NavTarget.NotLoggedInFlow -> {
                 val callback = object : NotLoggedInFlowNode.Callback {
-                    override fun onOpenBugReport() {
+                    override fun navigateToBugReport() {
                         backstack.push(NavTarget.BugReport)
                     }
                 }
@@ -245,11 +249,13 @@ class RootFlowNode(
                 createNode<NotLoggedInFlowNode>(buildContext, plugins = listOf(params, callback))
             }
             is NavTarget.SignedOutFlow -> {
-                signedOutEntryPoint.nodeBuilder(this, buildContext).params(
-                    SignedOutEntryPoint.Params(
-                        sessionId = navTarget.sessionId
-                    )
-                ).build()
+                signedOutEntryPoint.createNode(
+                    parentNode = this,
+                    buildContext = buildContext,
+                    params = SignedOutEntryPoint.Params(
+                        sessionId = navTarget.sessionId,
+                    ),
+                )
             }
             NavTarget.SplashScreen -> emptyNode(buildContext)
             NavTarget.BugReport -> {
@@ -258,11 +264,15 @@ class RootFlowNode(
                         backstack.pop()
                     }
                 }
-                bugReportEntryPoint.nodeBuilder(this, buildContext).callback(callback).build()
+                bugReportEntryPoint.createNode(
+                    parentNode = this,
+                    buildContext = buildContext,
+                    callback = callback,
+                )
             }
             is NavTarget.AccountSelect -> {
                 val callback: AccountSelectEntryPoint.Callback = object : AccountSelectEntryPoint.Callback {
-                    override fun onSelectAccount(sessionId: SessionId) {
+                    override fun onAccountSelected(sessionId: SessionId) {
                         lifecycleScope.launch {
                             if (sessionId == navTarget.currentSessionId) {
                                 // Ensure that the account selection Node is removed from the backstack
@@ -283,7 +293,11 @@ class RootFlowNode(
                         backstack.pop()
                     }
                 }
-                accountSelectEntryPoint.nodeBuilder(this, buildContext).callback(callback).build()
+                accountSelectEntryPoint.createNode(
+                    parentNode = this,
+                    buildContext = buildContext,
+                    callback = callback,
+                )
             }
         }
     }
@@ -335,7 +349,7 @@ class RootFlowNode(
         } else {
             // wait for the current session to be restored
             val loggedInFlowNode = attachSession(latestSessionId)
-            if (sessionStore.getAllSessions().size > 1) {
+            if (sessionStore.numberOfSessions() > 1) {
                 // Several accounts, let the user choose which one to use
                 backstack.push(
                     NavTarget.AccountSelect(
@@ -365,7 +379,7 @@ class RootFlowNode(
                 is PermalinkData.FallbackLink -> Unit
                 is PermalinkData.RoomEmailInviteLink -> Unit
                 else -> {
-                    if (sessionStore.getAllSessions().size > 1) {
+                    if (sessionStore.numberOfSessions() > 1) {
                         // Several accounts, let the user choose which one to use
                         backstack.push(
                             NavTarget.AccountSelect(
@@ -388,13 +402,19 @@ class RootFlowNode(
             is PermalinkData.FallbackLink -> Unit
             is PermalinkData.RoomEmailInviteLink -> Unit
             is PermalinkData.RoomLink -> {
+                // If there is a thread id, focus on it in the main timeline
+                val focusedEventId = if (permalinkData.threadId != null) {
+                    permalinkData.threadId?.asEventId()
+                } else {
+                    permalinkData.eventId
+                }
                 attachRoom(
                     roomIdOrAlias = permalinkData.roomIdOrAlias,
                     trigger = JoinedRoom.Trigger.MobilePermalink,
                     serverNames = permalinkData.viaParameters,
-                    eventId = permalinkData.eventId,
+                    eventId = focusedEventId,
                     clearBackstack = true
-                )
+                ).maybeAttachThread(permalinkData.threadId, permalinkData.eventId)
             }
             is PermalinkData.UserLink -> {
                 attachUser(permalinkData.userId)
@@ -402,12 +422,24 @@ class RootFlowNode(
         }
     }
 
+    private suspend fun RoomFlowNode.maybeAttachThread(threadId: ThreadId?, focusedEventId: EventId?) {
+        if (threadId != null) {
+            attachThread(threadId, focusedEventId)
+        }
+    }
+
     private suspend fun navigateTo(deeplinkData: DeeplinkData) {
         Timber.d("Navigating to $deeplinkData")
-        attachSession(deeplinkData.sessionId).apply {
+        attachSession(deeplinkData.sessionId).let { loggedInFlowNode ->
             when (deeplinkData) {
                 is DeeplinkData.Root -> Unit // The room list will always be shown, observing FtueState
-                is DeeplinkData.Room -> attachRoom(deeplinkData.roomId.toRoomIdOrAlias(), clearBackstack = true)
+                is DeeplinkData.Room -> {
+                    loggedInFlowNode.attachRoom(
+                        roomIdOrAlias = deeplinkData.roomId.toRoomIdOrAlias(),
+                        eventId = if (deeplinkData.threadId != null) deeplinkData.threadId?.asEventId() else deeplinkData.eventId,
+                        clearBackstack = true,
+                    ).maybeAttachThread(deeplinkData.threadId, deeplinkData.eventId)
+                }
             }
         }
     }

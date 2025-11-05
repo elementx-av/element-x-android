@@ -73,7 +73,6 @@ import io.element.android.libraries.matrix.api.core.toThreadId
 import io.element.android.libraries.matrix.api.encryption.EncryptionService
 import io.element.android.libraries.matrix.api.encryption.identity.IdentityState
 import io.element.android.libraries.matrix.api.permalink.PermalinkParser
-import io.element.android.libraries.matrix.api.recentemojis.AddRecentEmoji
 import io.element.android.libraries.matrix.api.room.JoinedRoom
 import io.element.android.libraries.matrix.api.room.MessageEventType
 import io.element.android.libraries.matrix.api.room.RoomInfo
@@ -87,6 +86,7 @@ import io.element.android.libraries.matrix.api.timeline.item.event.EventOrTransa
 import io.element.android.libraries.matrix.ui.messages.reply.map
 import io.element.android.libraries.matrix.ui.model.getAvatarData
 import io.element.android.libraries.matrix.ui.room.getDirectRoomMember
+import io.element.android.libraries.recentemojis.api.AddRecentEmoji
 import io.element.android.libraries.textcomposer.model.MessageComposerMode
 import io.element.android.libraries.ui.strings.CommonStrings
 import io.element.android.services.analytics.api.AnalyticsService
@@ -251,7 +251,7 @@ class MessagesPresenter(
                     if (!markingAsReadAndExiting.getAndSet(true)) {
                         val latestEventId = room.liveTimeline.getLatestEventId().getOrElse {
                             Timber.w(it, "Failed to get latest event id to mark as fully read")
-                            navigator.onNavigateUp()
+                            navigator.close()
                             return@launch
                         }
                         latestEventId?.let { eventId ->
@@ -259,7 +259,7 @@ class MessagesPresenter(
                                 markAsFullyRead(room.roomId, eventId)
                             }
                         }
-                        navigator.onNavigateUp()
+                        navigator.close()
                         markingAsReadAndExiting.set(false)
                     }
                 }
@@ -355,7 +355,7 @@ class MessagesPresenter(
                         is TimelineItemThreadInfo.ThreadResponse -> targetEvent.threadInfo.threadRootId
                         is TimelineItemThreadInfo.ThreadRoot, null -> targetEvent.eventId?.toThreadId()
                     } ?: return@launch
-                    navigator.onOpenThread(threadId, null)
+                    navigator.navigateToThread(threadId, null)
                 } else {
                     handleActionReply(targetEvent, composerState, timelineProtectionState)
                 }
@@ -463,7 +463,7 @@ class MessagesPresenter(
         when (targetEvent.content) {
             is TimelineItemPollContent -> {
                 if (targetEvent.eventId == null) return
-                navigator.onEditPollClick(targetEvent.eventId)
+                navigator.navigateToEditPoll(targetEvent.eventId)
             }
             else -> {
                 val composerMode = MessageComposerMode.Edit(
@@ -528,17 +528,17 @@ class MessagesPresenter(
     }
 
     private fun handleShowDebugInfoAction(event: TimelineItem.Event) {
-        navigator.onShowEventDebugInfoClick(event.eventId, event.debugInfo)
+        navigator.navigateToEventDebugInfo(event.eventId, event.debugInfo)
     }
 
     private fun handleForwardAction(event: TimelineItem.Event) {
         if (event.eventId == null) return
-        navigator.onForwardEventClick(event.eventId)
+        navigator.forwardEvent(event.eventId)
     }
 
     private fun handleReportAction(event: TimelineItem.Event) {
         if (event.eventId == null) return
-        navigator.onReportContentClick(event.eventId, event.senderId)
+        navigator.navigateToReportMessage(event.eventId, event.senderId)
     }
 
     private fun handleEndPollAction(
