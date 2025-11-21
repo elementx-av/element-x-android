@@ -22,12 +22,6 @@ android {
             isIncludeAndroidResources = true
         }
     }
-
-    buildTypes {
-        register("nightly") {
-            matchingFallbacks += listOf("release")
-        }
-    }
 }
 
 setupDependencyInjection()
@@ -56,6 +50,7 @@ dependencies {
     implementation(projects.libraries.network)
     implementation(projects.libraries.matrix.api)
     implementation(projects.libraries.matrixui)
+    implementation(projects.libraries.matrixmedia.api)
     implementation(projects.features.networkmonitor.api)
     implementation(projects.libraries.preferences.api)
     implementation(projects.libraries.sessionStorage.api)
@@ -77,7 +72,7 @@ dependencies {
     testCommonDependencies(libs)
     testImplementation(libs.coil.test)
     testImplementation(projects.libraries.matrix.test)
-    testImplementation(projects.libraries.matrixuiTest)
+    testImplementation(projects.libraries.matrixmedia.test)
     testImplementation(projects.libraries.preferences.test)
     testImplementation(projects.libraries.sessionStorage.test)
     testImplementation(projects.libraries.push.test)
@@ -89,6 +84,7 @@ dependencies {
     testImplementation(projects.features.enterprise.test)
     testImplementation(projects.features.lockscreen.test)
     testImplementation(projects.features.networkmonitor.test)
+    testImplementation(projects.services.appnavstate.impl)
     testImplementation(projects.services.appnavstate.test)
     testImplementation(projects.services.toolbox.impl)
     testImplementation(projects.services.toolbox.test)

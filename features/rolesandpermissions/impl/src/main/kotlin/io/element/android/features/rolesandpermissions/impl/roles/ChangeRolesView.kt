@@ -30,6 +30,7 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
@@ -71,6 +72,7 @@ import io.element.android.libraries.matrix.ui.components.SelectedUsersRowList
 import io.element.android.libraries.matrix.ui.model.getAvatarData
 import io.element.android.libraries.ui.strings.CommonStrings
 import kotlinx.collections.immutable.ImmutableList
+import kotlinx.collections.immutable.toImmutableList
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -143,7 +145,7 @@ fun ChangeRolesView(
                         SearchResultsList(
                             currentRole = state.role,
                             lazyListState = lazyListState,
-                            searchResults = (state.searchResults as? SearchBarResultState.Results)?.results ?: MembersByRole(emptyList()),
+                            searchResults = (state.searchResults as? SearchBarResultState.Results)?.results ?: MembersByRole(),
                             selectedUsers = state.selectedUsers,
                             canRemoveMember = state.canChangeMemberRole,
                             onToggleSelection = { state.eventSink(ChangeRolesEvent.UserSelectionToggled(it.toMatrixUser())) },
@@ -176,29 +178,23 @@ fun ChangeRolesView(
                             onDismiss = { state.eventSink(ChangeRolesEvent.CloseDialog) }
                         )
                     }
-                    else -> {
-                        when (state.role) {
-                            is RoomMember.Role.Owner -> {
-                                ConfirmationDialog(
-                                    title = stringResource(R.string.screen_room_change_role_confirm_change_owners_title),
-                                    content = stringResource(R.string.screen_room_change_role_confirm_change_owners_description),
-                                    submitText = stringResource(CommonStrings.action_continue),
-                                    onSubmitClick = { state.eventSink(ChangeRolesEvent.Save) },
-                                    onDismiss = { state.eventSink(ChangeRolesEvent.CloseDialog) },
-                                    destructiveSubmit = true,
-                                )
-                            }
-                            is RoomMember.Role.Admin -> {
-                                ConfirmationDialog(
-                                    title = stringResource(R.string.screen_room_change_role_confirm_add_admin_title),
-                                    content = stringResource(R.string.screen_room_change_role_confirm_add_admin_description),
-                                    onSubmitClick = { state.eventSink(ChangeRolesEvent.Save) },
-                                    onDismiss = { state.eventSink(ChangeRolesEvent.CloseDialog) }
-                                )
-                            }
-                            // No confirmation needed for Moderator or User roles
-                            else -> Unit
-                        }
+                    is ConfirmingModifyingOwners -> {
+                        ConfirmationDialog(
+                            title = stringResource(R.string.screen_room_change_role_confirm_change_owners_title),
+                            content = stringResource(R.string.screen_room_change_role_confirm_change_owners_description),
+                            submitText = stringResource(CommonStrings.action_continue),
+                            onSubmitClick = { state.eventSink(ChangeRolesEvent.Save) },
+                            onDismiss = { state.eventSink(ChangeRolesEvent.CloseDialog) },
+                            destructiveSubmit = true,
+                        )
+                    }
+                    is ConfirmingModifyingAdmins -> {
+                        ConfirmationDialog(
+                            title = stringResource(R.string.screen_room_change_role_confirm_add_admin_title),
+                            content = stringResource(R.string.screen_room_change_role_confirm_add_admin_description),
+                            onSubmitClick = { state.eventSink(ChangeRolesEvent.Save) },
+                            onDismiss = { state.eventSink(ChangeRolesEvent.CloseDialog) }
+                        )
                     }
                 }
             },
@@ -226,7 +222,18 @@ private fun SearchResultsList(
         state = lazyListState,
     ) {
         item {
-            selectedUsersList(selectedUsers)
+            val usersInHorizontalRow = remember(searchResults.owners, selectedUsers) {
+                if (currentRole == RoomMember.Role.Admin) {
+                    // Also include the owners in the horizontal list
+                    val owners = searchResults.owners.map {
+                        it.toMatrixUser()
+                    }
+                    (owners + selectedUsers).toImmutableList()
+                } else {
+                    selectedUsers
+                }
+            }
+            selectedUsersList(usersInHorizontalRow)
         }
         if (searchResults.owners.isNotEmpty()) {
             stickyHeader { ListSectionHeader(text = stringResource(R.string.screen_room_roles_and_permissions_owners)) }

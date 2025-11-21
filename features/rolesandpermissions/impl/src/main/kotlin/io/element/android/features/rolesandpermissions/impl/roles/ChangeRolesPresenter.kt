@@ -12,6 +12,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.produceState
@@ -25,6 +26,7 @@ import im.vector.app.features.analytics.plan.RoomModeration
 import io.element.android.features.rolesandpermissions.impl.RoomMemberListDataSource
 import io.element.android.libraries.architecture.AsyncAction
 import io.element.android.libraries.architecture.Presenter
+import io.element.android.libraries.architecture.runUpdatingState
 import io.element.android.libraries.core.coroutine.CoroutineDispatchers
 import io.element.android.libraries.designsystem.theme.components.SearchBarResultState
 import io.element.android.libraries.di.annotations.RoomCoroutineScope
@@ -59,6 +61,8 @@ class ChangeRolesPresenter(
     fun interface Factory {
         fun create(role: RoomMember.Role): ChangeRolesPresenter
     }
+
+    private val powerLevelRoomMemberComparator = PowerLevelRoomMemberComparator()
 
     @Composable
     override fun present(): ChangeRolesState {
@@ -101,7 +105,11 @@ class ChangeRolesPresenter(
             }
         }
 
-        val hasPendingChanges = usersWithRole.value != selectedUsers.value
+        val hasPendingChanges by remember {
+            derivedStateOf {
+                usersWithRole.value.toSet() != selectedUsers.value.toSet()
+            }
+        }
 
         val roomInfo by room.roomInfoFlow.collectAsState()
         fun canChangeMemberRole(userId: UserId): Boolean {
@@ -131,16 +139,20 @@ class ChangeRolesPresenter(
                 is ChangeRolesEvent.Save -> {
                     val currentUserIsAdmin = roomInfo.roleOf(room.sessionId) == RoomMember.Role.Admin
                     val isModifyingAdmins = role == RoomMember.Role.Admin
-                    val hasChanges = selectedUsers != usersWithRole
                     val isConfirming = saveState.value.isConfirming()
                     val modifyingOwners = role is RoomMember.Role.Owner
-
-                    val needsConfirmation = (modifyingOwners || currentUserIsAdmin && isModifyingAdmins) && hasChanges && !isConfirming
-
+                    val confirmationValue = if (hasPendingChanges && !isConfirming) {
+                        when {
+                            modifyingOwners -> ConfirmingModifyingOwners
+                            currentUserIsAdmin && isModifyingAdmins -> ConfirmingModifyingAdmins
+                            else -> null
+                        }
+                    } else {
+                        null
+                    }
                     when {
-                        needsConfirmation -> {
-                            // Confirm modifying users
-                            saveState.value = AsyncAction.ConfirmingNoParams
+                        confirmationValue != null -> {
+                            saveState.value = confirmationValue
                         }
                         !saveState.value.isLoading() -> {
                             roomCoroutineScope.save(usersWithRole.value, selectedUsers, saveState)
@@ -175,17 +187,7 @@ class ChangeRolesPresenter(
     }
 
     private fun List<RoomMember>.groupedByRole(): MembersByRole {
-        val groupedMembers = MembersByRole(this)
-        return MembersByRole(
-            owners = groupedMembers.owners.sorted(),
-            admins = groupedMembers.admins.sorted(),
-            moderators = groupedMembers.moderators.sorted(),
-            members = groupedMembers.members.sorted(),
-        )
-    }
-
-    private fun Iterable<RoomMember>.sorted(): ImmutableList<RoomMember> {
-        return sortedWith(PowerLevelRoomMemberComparator()).toImmutableList()
+        return MembersByRole(this, powerLevelRoomMemberComparator)
     }
 
     private fun CoroutineScope.save(
@@ -193,37 +195,27 @@ class ChangeRolesPresenter(
         selectedUsers: MutableState<ImmutableList<MatrixUser>>,
         saveState: MutableState<AsyncAction<Boolean>>,
     ) = launch {
-        saveState.value = AsyncAction.Loading
-
-        val toAdd = selectedUsers.value - usersWithRole
-        val toRemove = usersWithRole - selectedUsers.value
-
-        val changes: List<UserRoleChange> = buildList {
-            for (selectedUser in toAdd) {
-                analyticsService.capture(RoomModeration(RoomModeration.Action.ChangeMemberRole, role.toAnalyticsMemberRole()))
-                add(UserRoleChange(selectedUser.userId, role))
+        runUpdatingState(saveState) {
+            val toAdd = selectedUsers.value - usersWithRole
+            val toRemove = usersWithRole - selectedUsers.value
+            val changes: List<UserRoleChange> = buildList {
+                for (selectedUser in toAdd) {
+                    analyticsService.capture(RoomModeration(RoomModeration.Action.ChangeMemberRole, role.toAnalyticsMemberRole()))
+                    add(UserRoleChange(selectedUser.userId, role))
+                }
+                for (selectedUser in toRemove) {
+                    analyticsService.capture(RoomModeration(RoomModeration.Action.ChangeMemberRole, RoomModeration.Role.User))
+                    add(UserRoleChange(selectedUser.userId, RoomMember.Role.User))
+                }
             }
-            for (selectedUser in toRemove) {
-                analyticsService.capture(RoomModeration(RoomModeration.Action.ChangeMemberRole, RoomModeration.Role.User))
-                add(UserRoleChange(selectedUser.userId, RoomMember.Role.User))
-            }
+            room.updateUsersRoles(changes).map { true }
         }
-
-        room.updateUsersRoles(changes)
-            .onFailure {
-                saveState.value = AsyncAction.Failure(it)
-            }
-            .onSuccess {
-                // Asynchronously reload the room members
-                launch { room.updateMembers() }
-                saveState.value = AsyncAction.Success(true)
-            }
     }
-}
 
-internal fun RoomMember.Role.toAnalyticsMemberRole(): RoomModeration.Role = when (this) {
-    is RoomMember.Role.Owner -> RoomModeration.Role.Administrator // TODO - distinguish creator from admin
-    RoomMember.Role.Admin -> RoomModeration.Role.Administrator
-    RoomMember.Role.Moderator -> RoomModeration.Role.Moderator
-    RoomMember.Role.User -> RoomModeration.Role.User
+    internal fun RoomMember.Role.toAnalyticsMemberRole(): RoomModeration.Role = when (this) {
+        is RoomMember.Role.Owner -> RoomModeration.Role.Administrator // TODO - distinguish creator from admin
+        RoomMember.Role.Admin -> RoomModeration.Role.Administrator
+        RoomMember.Role.Moderator -> RoomModeration.Role.Moderator
+        RoomMember.Role.User -> RoomModeration.Role.User
+    }
 }
