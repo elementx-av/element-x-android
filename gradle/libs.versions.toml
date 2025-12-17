@@ -3,7 +3,7 @@
 
 [versions]
 # Project
-android_gradle_plugin = "8.13.1"
+android_gradle_plugin = "8.13.2"
 # When updateing this, please also update the version in the file ./idea/kotlinc.xml
 kotlin = "2.2.20"
 kotlinpoet = "2.2.0"
@@ -22,7 +22,7 @@ camera = "1.5.2"
 work = "2.11.0"
 
 # Compose
-compose_bom = "2025.07.00"
+compose_bom = "2025.12.00"
 
 # Coroutines
 coroutines = "1.10.2"
@@ -82,7 +82,7 @@ google_firebase_bom = "com.google.firebase:firebase-bom:34.6.0"
 firebase_appdistribution_gradle = { module = "com.google.firebase:firebase-appdistribution-gradle", version.ref = "firebaseAppDistribution" }
 autonomousapps_dependencyanalysis_plugin = { module = "com.autonomousapps:dependency-analysis-gradle-plugin", version.ref = "dependencyAnalysis" }
 ksp_plugin = { module = "com.google.devtools.ksp:symbol-processing-api", version.ref = "ksp" }
-google_tink = "com.google.crypto.tink:tink-android:1.19.0"
+google_tink = "com.google.crypto.tink:tink-android:1.20.0"
 
 # AndroidX
 androidx_core = { module = "androidx.core:core", version.ref = "core" }
