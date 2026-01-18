@@ -203,6 +203,7 @@ class RustMatrixClient(
         roomMembershipObserver = roomMembershipObserver,
         sessionCoroutineScope = sessionCoroutineScope,
         sessionDispatcher = sessionDispatcher,
+        analyticsService = analyticsService,
     )
 
     override val sessionVerificationService = RustSessionVerificationService(
@@ -393,6 +394,7 @@ class RustMatrixClient(
                 joinRuleOverride = createRoomParams.joinRuleOverride?.map(),
                 historyVisibilityOverride = createRoomParams.historyVisibilityOverride?.map(),
                 canonicalAlias = createRoomParams.roomAliasName.getOrNull(),
+                isSpace = createRoomParams.isSpace,
             )
             val roomId = RoomId(innerClient.createRoom(rustParams))
             // Wait to receive the room back from the sync but do not returns failure if it fails.
@@ -786,6 +788,13 @@ class RustMatrixClient(
         runCatchingExceptions {
             Timber.d("Performing database vacuuming for session $sessionId...")
             innerClient.optimizeStores()
+        }
+    }
+
+    override suspend fun resetWellKnownConfig(): Result<Unit> {
+        return runCatchingExceptions {
+            Timber.d("Resetting well-known config for session $sessionId")
+            innerClient.resetWellKnown()
         }
     }
 

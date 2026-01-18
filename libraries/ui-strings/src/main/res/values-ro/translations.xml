@@ -114,6 +114,7 @@
   <string name="action_load_more">"Încărcați mai mult"</string>
   <string name="action_manage_account">"Administrare cont"</string>
   <string name="action_manage_devices">"Gestionare dispozitive"</string>
+  <string name="action_manage_rooms">"Gestionați camerele"</string>
   <string name="action_message">"Mesaj"</string>
   <string name="action_minimize">"Minimizați"</string>
   <string name="action_next">"Următorul"</string>
@@ -483,7 +484,6 @@ Sunteți sigur că doriți să continuați?"</string>
   <string name="screen_space_list_details">"%1$s • %2$s"</string>
   <string name="screen_space_list_parent_space">"Spațiu %1$s"</string>
   <string name="screen_space_list_title">"Spații"</string>
-  <string name="screen_space_menu_action_members">"Vizualizați membrii"</string>
   <string name="screen_timeline_item_menu_send_failure_changed_identity">"Mesajul nu a fost trimis deoarece identitatea verificată a lui %1$s s-a schimbat."</string>
   <string name="screen_timeline_item_menu_send_failure_unsigned_device">"Mesajul nu a fost trimis deoarece %1$s nu a verificat toate dispozitivele."</string>
   <string name="screen_timeline_item_menu_send_failure_you_unsigned_device">"Mesajul nu a fost trimis deoarece nu ați verificat unul sau mai multe dispozitive."</string>

@@ -70,6 +70,13 @@ enum class FeatureFlags(
         defaultValue = { false },
         isFinished = false,
     ),
+    CreateSpaces(
+        key = "feature.createSpaces",
+        title = "Create spaces",
+        description = "Allow creating spaces.",
+        defaultValue = { false },
+        isFinished = false,
+    ),
     SpaceSettings(
         key = "feature.spaceSettings",
         title = "Space settings",
@@ -123,6 +130,13 @@ enum class FeatureFlags(
         key = "feature.qr_code_login",
         title = "QR Code Login",
         description = "Allow logging in on other devices using a QR code.",
+        defaultValue = { false },
+        isFinished = false,
+    ),
+    SignInWithClassic(
+        key = "feature.signin_with_classic",
+        title = "Sign in with Element Classic",
+        description = "Allow the application to sign in to the current Element Classic account.",
         defaultValue = { false },
         isFinished = false,
     ),
