@@ -18,8 +18,8 @@ constraintlayout_compose = "1.1.1"
 lifecycle = "2.10.0"
 activity = "1.12.2"
 media3 = "1.9.1"
-camera = "1.5.2"
-work = "2.11.0"
+camera = "1.5.3"
+work = "2.11.1"
 
 # Compose
 compose_bom = "2026.01.00"
@@ -52,7 +52,7 @@ haze = "1.7.1"
 dependencyAnalysis = "3.5.1"
 
 # DI
-metro = "0.10.1"
+metro = "0.10.2"
 
 # Auto service
 autoservice = "1.1.1"
