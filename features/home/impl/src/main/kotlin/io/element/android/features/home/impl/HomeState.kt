@@ -29,9 +29,9 @@ data class HomeState(
     val snackbarMessage: SnackbarMessage?,
     val canReportBug: Boolean,
     val directLogoutState: DirectLogoutState,
-    val eventSink: (HomeEvents) -> Unit,
+    val eventSink: (HomeEvent) -> Unit,
 ) {
     val displayActions = currentHomeNavigationBarItem == HomeNavigationBarItem.Chats
     val displayRoomListFilters = currentHomeNavigationBarItem == HomeNavigationBarItem.Chats && roomListState.displayFilters
-    val showNavigationBar = homeSpacesState.spaceRooms.isNotEmpty()
+    val showNavigationBar = homeSpacesState.canCreateSpaces || homeSpacesState.spaceRooms.isNotEmpty()
 }
