@@ -18,7 +18,7 @@ jobs:
   nightly:
     name: Deploy nightly
     concurrency:
-      group: ${{ format('build-release-main-gplay-{0}', github.sha) }}
+      group: nightly-${{ github.ref }}
       cancel-in-progress: true    
     runs-on: ubuntu-latest
     steps:
@@ -28,7 +28,7 @@ jobs:
         with:
           distribution: 'temurin' # See 'Supported distributions' for available options
           java-version: '21'
-          ref: xxx
+          #ref: xxx
       - name: Configure gradle
         uses: gradle/actions/setup-gradle@v3
       - name: Create app bundle
