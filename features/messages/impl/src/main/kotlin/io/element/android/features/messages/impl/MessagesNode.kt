@@ -105,7 +105,7 @@ class MessagesNode(
     private val timelineController = TimelineController(room, room.liveTimeline)
     private val presenter = presenterFactory.create(
         navigator = this,
-        composerPresenter = messageComposerPresenterFactory.create(timelineController, this),
+        composerPresenter = messageComposerPresenterFactory.create(timelineController, this, isInThread = false),
         timelinePresenter = timelinePresenterFactory.create(timelineController = timelineController, this),
         actionListPresenter = actionListPresenterFactory.create(
             postProcessor = TimelineItemActionPostProcessor.Default,
@@ -125,11 +125,12 @@ class MessagesNode(
         fun navigateToSendLocation()
         fun navigateToCreatePoll()
         fun navigateToEditPoll(eventId: EventId)
-        fun navigateToRoomCall(roomId: RoomId)
+        fun navigateToRoomCall(roomId: RoomId, isAudioCall: Boolean)
         fun navigateToThread(threadRootId: ThreadId, focusedEventId: EventId?)
         fun navigateToRoomDetails()
         fun navigateToPinnedMessagesList()
         fun navigateToKnockRequestsList()
+        fun navigateToDeveloperSettings()
     }
 
     override fun onBuilt() {
@@ -222,8 +223,16 @@ class MessagesNode(
         }
     }
 
+    override fun navigateToMember(userId: UserId) {
+        callback.navigateToRoomMemberDetails(userId)
+    }
+
     override fun navigateToThread(threadRootId: ThreadId, focusedEventId: EventId?) {
         callback.navigateToThread(threadRootId, focusedEventId)
+    }
+
+    override fun navigateToDeveloperSettings() {
+        callback.navigateToDeveloperSettings()
     }
 
     private fun displaySameRoomToast() {
@@ -279,7 +288,9 @@ class MessagesNode(
                 },
                 onSendLocationClick = callback::navigateToSendLocation,
                 onCreatePollClick = callback::navigateToCreatePoll,
-                onJoinCallClick = { callback.navigateToRoomCall(room.roomId) },
+                onJoinCallClick = { isAudioCall ->
+                    callback.navigateToRoomCall(room.roomId, isAudioCall)
+                },
                 onViewAllPinnedMessagesClick = callback::navigateToPinnedMessagesList,
                 modifier = modifier,
                 knockRequestsBannerView = {
