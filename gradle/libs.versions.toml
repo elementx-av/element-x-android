@@ -6,7 +6,7 @@
 android_gradle_plugin = "8.13.2"
 # When updating this, please also update the version in the file ./idea/kotlinc.xml
 kotlin = "2.3.20"
-kotlinpoet = "2.2.0"
+kotlinpoet = "2.3.0"
 ksp = "2.3.6"
 firebaseAppDistribution = "5.2.1"
 
@@ -207,7 +207,7 @@ vanniktech_blurhash = "com.vanniktech:blurhash:0.3.0"
 telephoto_zoomableimage = { module = "me.saket.telephoto:zoomable-image-coil", version.ref = "telephoto" }
 telephoto_flick = { module = "me.saket.telephoto:flick-android", version.ref = "telephoto" }
 statemachine = "com.freeletics.flowredux:compose:1.2.2"
-maplibre = "org.maplibre.gl:android-sdk:13.0.1"
+maplibre = "org.maplibre.gl:android-sdk:13.0.2"
 maplibre_ktx = "org.maplibre.gl:android-sdk-ktx-v7:3.0.2"
 maplibre_compose = "org.maplibre.compose:maplibre-compose:0.12.1"
 maplibre_annotation = "org.maplibre.gl:android-plugin-annotation-v9:3.0.2"
@@ -221,7 +221,7 @@ color_picker = "io.mhssn:colorpicker:1.0.0"
 
 # Analytics
 posthog = "com.posthog:posthog-android:3.39.0"
-sentry = "io.sentry:sentry-android:8.36.0"
+sentry = "io.sentry:sentry-android:8.37.1"
 # main branch can be tested replacing the version with main-SNAPSHOT
 matrix_analytics_events = "com.github.matrix-org:matrix-analytics-events:0.33.2"
 
