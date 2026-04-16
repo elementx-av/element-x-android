@@ -54,7 +54,7 @@ haze = "1.7.2"
 dependencyAnalysis = "3.6.1"
 
 # DI
-metro = "0.13.1"
+metro = "0.13.2"
 
 # Auto service
 autoservice = "1.1.1"
@@ -165,7 +165,7 @@ test_mockk = "io.mockk:mockk:1.14.9"
 test_konsist = "com.lemonappdev:konsist:0.17.3"
 test_turbine = "app.cash.turbine:turbine:1.2.1"
 test_truth = "com.google.truth:truth:1.4.5"
-test_parameter_injector = "com.google.testparameterinjector:test-parameter-injector:1.21"
+test_parameter_injector = "com.google.testparameterinjector:test-parameter-injector:1.22"
 test_robolectric = "org.robolectric:robolectric:4.16.1"
 test_appyx_junit = { module = "com.bumble.appyx:testing-junit4", version.ref = "appyx" }
 test_composable_preview_scanner = "io.github.sergio-sastre.ComposablePreviewScanner:android:0.8.2"
@@ -204,7 +204,7 @@ sqlcipher = "net.zetetic:sqlcipher-android:4.14.1"
 sqlite = "androidx.sqlite:sqlite-ktx:2.6.2"
 unifiedpush = "org.unifiedpush.android:connector:3.3.2"
 vanniktech_blurhash = "com.vanniktech:blurhash:0.3.0"
-telephoto_zoomableimage = { module = "me.saket.telephoto:zoomable-image-coil", version.ref = "telephoto" }
+telephoto_zoomableimage = { module = "me.saket.telephoto:zoomable-image-coil3", version.ref = "telephoto" }
 telephoto_flick = { module = "me.saket.telephoto:flick-android", version.ref = "telephoto" }
 statemachine = "com.freeletics.flowredux:compose:1.2.2"
 maplibre = "org.maplibre.gl:android-sdk:13.0.2"
