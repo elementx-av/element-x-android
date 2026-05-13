@@ -199,7 +199,6 @@
   <string name="common_advanced_settings">"Speciális beállítások"</string>
   <string name="common_an_image">"egy kép"</string>
   <string name="common_analytics">"Elemzések"</string>
-  <string name="common_android_fetching_notifications_title">"Értesítések szinkronizálása…"</string>
   <string name="common_android_shortcuts_remove_reason_left_room">"Elhagyta a szobát"</string>
   <string name="common_android_shortcuts_remove_reason_session_logged_out">"Ki lett jelentkeztetve a munkamenetből"</string>
   <string name="common_appearance">"Megjelenítés"</string>
@@ -219,7 +218,6 @@
   <string name="common_current_user_left_room">"Elhagyta a szobát"</string>
   <string name="common_current_user_left_space">"Tér elhagyva"</string>
   <string name="common_current_user_rejected_invite">"Meghívás elutasítva"</string>
-  <string name="common_dark">"Sötét"</string>
   <string name="common_decryption_error">"Visszafejtési hiba"</string>
   <string name="common_description">"Leírás"</string>
   <string name="common_developer_options">"Fejlesztői beállítások"</string>
@@ -245,6 +243,7 @@ Ok: %1$s."</string>
   <string name="common_failed">"Sikertelen"</string>
   <string name="common_favourite">"Kedvenc"</string>
   <string name="common_favourited">"Kedvencnek jelölve"</string>
+  <string name="common_fetching_notifications_title_android">"Értesítések szinkronizálása…"</string>
   <string name="common_file">"Fájl"</string>
   <string name="common_file_deleted">"Fájl törölve"</string>
   <string name="common_file_saved">"A fájl mentve"</string>
@@ -258,7 +257,6 @@ Ok: %1$s."</string>
   <string name="common_invite_unknown_profile">"Ez a Matrix-azonosító nem található, ezért előfordulhat, hogy a meghívó nem érkezik meg."</string>
   <string name="common_leaving_room">"Szoba elhagyása"</string>
   <string name="common_leaving_space">"Tér elhagyása"</string>
-  <string name="common_light">"Világos"</string>
   <string name="common_line_copied_to_clipboard">"A sor a vágólapra másolva"</string>
   <string name="common_link_copied_to_clipboard">"Hivatkozás a vágólapra másolva"</string>
   <string name="common_link_new_device">"Új eszköz összekapcsolása"</string>
@@ -377,7 +375,6 @@ Ok: %1$s."</string>
   <string name="common_suggested">"Javaslat"</string>
   <string name="common_suggestions">"Javaslatok"</string>
   <string name="common_syncing">"Szinkronizálás"</string>
-  <string name="common_system">"Rendszer"</string>
   <string name="common_text">"Szöveg"</string>
   <string name="common_third_party_notices">"Harmadik felek nyilatkozatai"</string>
   <string name="common_thread">"Üzenetszál"</string>

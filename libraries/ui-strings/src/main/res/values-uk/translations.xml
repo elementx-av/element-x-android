@@ -201,7 +201,6 @@
   <string name="common_advanced_settings">"Додаткові налаштування"</string>
   <string name="common_an_image">"зображення"</string>
   <string name="common_analytics">"Аналітика"</string>
-  <string name="common_android_fetching_notifications_title">"Синхронізація сповіщень…"</string>
   <string name="common_android_shortcuts_remove_reason_left_room">"Ви вийшли з кімнати"</string>
   <string name="common_android_shortcuts_remove_reason_session_logged_out">"Ви вийшли з сеансу"</string>
   <string name="common_appearance">"Тема"</string>
@@ -221,7 +220,6 @@
   <string name="common_current_user_left_room">"Виходить з кімнати"</string>
   <string name="common_current_user_left_space">"Вийшов із простору"</string>
   <string name="common_current_user_rejected_invite">"Запрошення відхилено"</string>
-  <string name="common_dark">"Темна"</string>
   <string name="common_decryption_error">"Помилка розшифрування"</string>
   <string name="common_description">"Опис"</string>
   <string name="common_developer_options">"Налаштування розробника"</string>
@@ -247,6 +245,7 @@
   <string name="common_failed">"Помилка"</string>
   <string name="common_favourite">"Обране"</string>
   <string name="common_favourited">"Обране"</string>
+  <string name="common_fetching_notifications_title_android">"Синхронізація сповіщень…"</string>
   <string name="common_file">"Файл"</string>
   <string name="common_file_deleted">"Файл видалено"</string>
   <string name="common_file_saved">"Файл збережено"</string>
@@ -260,7 +259,6 @@
   <string name="common_invite_unknown_profile">"Цей Matrix-ID не знайдено, тому запрошення може не бути отримано."</string>
   <string name="common_leaving_room">"Вихід з кімнати"</string>
   <string name="common_leaving_space">"Вихід з простору"</string>
-  <string name="common_light">"Світла"</string>
   <string name="common_line_copied_to_clipboard">"Рядок скопійовано до буфера обміну"</string>
   <string name="common_link_copied_to_clipboard">"Посилання скопійовано в буфер обміну"</string>
   <string name="common_link_new_device">"Під\'єднати новий пристрій"</string>
@@ -387,7 +385,6 @@
   <string name="common_suggested">"Запропоновано"</string>
   <string name="common_suggestions">"Пропозиції"</string>
   <string name="common_syncing">"Синхронізація"</string>
-  <string name="common_system">"Системна"</string>
   <string name="common_text">"Текст"</string>
   <string name="common_third_party_notices">"Повідомлення третіх сторін"</string>
   <string name="common_thread">"Гілка"</string>
