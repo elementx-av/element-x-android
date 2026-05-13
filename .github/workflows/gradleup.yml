@@ -16,9 +16,12 @@ jobs:
           persist-credentials: false
       - uses: actions/setup-java@v5
         name: Use JDK 21
-        if: (github.event_name == 'pull_request' && github.event.pull_request.fork == null) || github.event_name == 'workflow_dispatch'
+        if: |
+          github.event_name == 'workflow_dispatch' ||
+          github.event_name == 'schedule' ||
+          (github.event_name == 'pull_request' && github.event.pull_request.fork == null)
         with:
-          distribution: 'temurin' # See 'Supported distributions' for available options
+          distribution: 'temurin'
           java-version: '21'
       - name: Update Gradle Wrapper
         uses: gradle-update/update-gradle-wrapper-action@512b1875f3b6270828abfe77b247d5895a2da1e5 # v2.1.0
