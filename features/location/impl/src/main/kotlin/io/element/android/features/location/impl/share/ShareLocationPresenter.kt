@@ -14,6 +14,7 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.produceState
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
@@ -35,13 +36,12 @@ import io.element.android.features.location.impl.common.toDialogState
 import io.element.android.features.location.impl.live.LiveLocationStore
 import io.element.android.features.messages.api.MessageComposerContext
 import io.element.android.libraries.architecture.AsyncAction
+import io.element.android.libraries.architecture.AsyncData
 import io.element.android.libraries.architecture.Presenter
 import io.element.android.libraries.architecture.runUpdatingState
 import io.element.android.libraries.core.extensions.flatMap
 import io.element.android.libraries.core.meta.BuildMeta
 import io.element.android.libraries.dateformatter.api.DurationFormatter
-import io.element.android.libraries.featureflag.api.FeatureFlagService
-import io.element.android.libraries.featureflag.api.FeatureFlags
 import io.element.android.libraries.matrix.api.MatrixClient
 import io.element.android.libraries.matrix.api.room.CreateTimelineParams
 import io.element.android.libraries.matrix.api.room.JoinedRoom
@@ -66,7 +66,6 @@ class ShareLocationPresenter(
     private val messageComposerContext: MessageComposerContext,
     private val locationActions: LocationActions,
     private val buildMeta: BuildMeta,
-    private val featureFlagService: FeatureFlagService,
     private val client: MatrixClient,
     private val durationFormatter: DurationFormatter,
     private val liveLocationShareManager: ActiveLiveLocationShareManager,
@@ -83,15 +82,16 @@ class ShareLocationPresenter(
     override fun present(): ShareLocationState {
         val permissionsState: PermissionsState = permissionsPresenter.present()
         var trackUserPosition: Boolean by remember { mutableStateOf(permissionsState.isAnyGranted && locationActions.isLocationEnabled()) }
-        val isLiveLocationSharingEnabled by remember {
-            featureFlagService.isFeatureEnabledFlow(FeatureFlags.LiveLocationSharing)
-        }.collectAsState(false)
         val appName by remember { derivedStateOf { buildMeta.applicationName } }
         var dialogState: ShareLocationState.Dialog by remember {
             mutableStateOf(ShareLocationState.Dialog.None)
         }
         val startLiveLocationAction = remember { mutableStateOf<AsyncAction<Unit>>(AsyncAction.Uninitialized) }
         val currentUser by client.userProfile.collectAsState()
+        val customMapStyleUrl by produceState(AsyncData.Loading()) {
+            // Ignore errors
+            value = AsyncData.Success(client.getMapStyleUrl().getOrNull())
+        }
         val sendLiveLocationPermissions by room.permissionsAsState(SendLiveLocationPermissions.DEFAULT) { perms ->
             perms.sendLiveLocationPermissions()
         }
@@ -167,11 +167,12 @@ class ShareLocationPresenter(
         }
 
         return ShareLocationState(
+            customMapStyleUrl = customMapStyleUrl,
             currentUser = currentUser,
             dialogState = dialogState,
             trackUserLocation = trackUserPosition,
             hasLocationPermission = permissionsState.isAnyGranted,
-            canShareLiveLocation = isLiveLocationSharingEnabled && timelineMode.canShareLiveLocation(),
+            canShareLiveLocation = timelineMode.canShareLiveLocation(),
             appName = appName,
             startLiveLocationAction = startLiveLocationAction.value,
             eventSink = ::handleEvent,
