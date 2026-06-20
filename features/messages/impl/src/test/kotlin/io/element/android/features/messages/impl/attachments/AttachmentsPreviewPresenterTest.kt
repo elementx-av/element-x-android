@@ -64,6 +64,7 @@ import io.element.android.tests.testutils.lambda.any
 import io.element.android.tests.testutils.lambda.lambdaError
 import io.element.android.tests.testutils.lambda.lambdaRecorder
 import io.element.android.tests.testutils.lambda.value
+import io.element.android.tests.testutils.robolectric.RobolectricTest
 import io.element.android.tests.testutils.test
 import io.element.android.tests.testutils.testCoroutineDispatchers
 import io.mockk.every
@@ -76,14 +77,11 @@ import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.runTest
 import org.junit.Rule
 import org.junit.Test
-import org.junit.runner.RunWith
-import org.robolectric.RobolectricTestRunner
 import java.io.File
 import kotlin.io.path.createTempFile
 
 @Suppress("LargeClass")
-@RunWith(RobolectricTestRunner::class)
-class AttachmentsPreviewPresenterTest {
+class AttachmentsPreviewPresenterTest : RobolectricTest() {
     @get:Rule
     val warmUpRule = WarmUpRule()
 
@@ -624,7 +622,11 @@ class AttachmentsPreviewPresenterTest {
             val croppedState = awaitItem()
             croppedState.eventSink(AttachmentsPreviewEvent.RotateImageToTheLeft)
             val rotatedState = awaitItem()
-            rotatedState.eventSink(AttachmentsPreviewEvent.ApplyImageEdits)
+            rotatedState.eventSink(AttachmentsPreviewEvent.FlipImageHorizontally)
+            val flippedHorizontallyState = awaitItem()
+            flippedHorizontallyState.eventSink(AttachmentsPreviewEvent.FlipImageVertically)
+            val flippedState = awaitItem()
+            flippedState.eventSink(AttachmentsPreviewEvent.ApplyImageEdits)
 
             val appliedState = consumeItemsUntilPredicate { !it.isApplyingImageEdits && it.imageEditorState == null }.last()
             assertThat((appliedState.attachment as Attachment.Media).localMedia.uri).isEqualTo(editedUri)
@@ -638,9 +640,36 @@ class AttachmentsPreviewPresenterTest {
                 right = cropRect.bottom,
                 bottom = 1f - cropRect.left,
             )
-            reopenedState.imageEditorState.edits.cropRect.assertIsSimilarTo(rotatedCropRect)
+            val flippedCropRect = NormalizedCropRect(
+                left = 1f - rotatedCropRect.right,
+                top = 1f - rotatedCropRect.bottom,
+                right = 1f - rotatedCropRect.left,
+                bottom = 1f - rotatedCropRect.top,
+            )
+            reopenedState.imageEditorState.edits.cropRect.assertIsSimilarTo(flippedCropRect)
             assertThat(reopenedState.imageEditorState.edits.rotationQuarterTurns).isEqualTo(3)
             assertThat(reopenedState.imageEditorState.edits.rotationDegrees).isEqualTo(270)
+            assertThat(reopenedState.imageEditorState.edits.isFlippedHorizontally).isTrue()
+            assertThat(reopenedState.imageEditorState.edits.isFlippedVertically).isTrue()
+        }
+    }
+
+    @Test
+    fun `present - image editor flip events update edits`() = runTest {
+        val presenter = createAttachmentsPreviewPresenter(displayMediaQualitySelectorViews = true)
+
+        presenter.test {
+            val initialState = awaitItem()
+            initialState.eventSink(AttachmentsPreviewEvent.OpenImageEditor)
+            val editorState = consumeItemsUntilPredicate { it.imageEditorState != null }.last()
+
+            editorState.eventSink(AttachmentsPreviewEvent.FlipImageHorizontally)
+            val flippedHorizontallyState = awaitItem()
+            assertThat(flippedHorizontallyState.imageEditorState?.edits?.isFlippedHorizontally).isTrue()
+
+            flippedHorizontallyState.eventSink(AttachmentsPreviewEvent.FlipImageVertically)
+            val flippedState = awaitItem()
+            assertThat(flippedState.imageEditorState?.edits?.isFlippedVertically).isTrue()
         }
     }
 
