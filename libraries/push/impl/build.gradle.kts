@@ -24,7 +24,7 @@ android {
     }
 
     buildTypes {
-        val defaultPusherAppId = "im.vector.app.android"
+        val defaultPusherAppId = "pt.aguiarvieira.element.xxx"
         getByName("release") {
             buildConfigFieldStr(
                 name = "PUSHER_APP_ID",
