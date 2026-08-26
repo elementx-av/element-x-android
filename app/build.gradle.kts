@@ -35,14 +35,15 @@ plugins {
     alias(libs.plugins.licensee)
     alias(libs.plugins.kotlin.serialization)
     // To be able to update the firebase.xml files, uncomment and build the project
-    // alias(libs.plugins.gms.google.services)
+    alias(libs.plugins.gms.google.services)
 }
 
 android {
     namespace = "io.element.android.x"
 
     defaultConfig {
-        applicationId = BuildTimeConfig.APPLICATION_ID
+        //applicationId = BuildTimeConfig.APPLICATION_ID
+        applicationId = "pt.aguiarvieira.element.xxx"
         targetSdk = Versions.TARGET_SDK
         versionCode = Versions.VERSION_CODE
         versionName = Versions.VERSION_NAME
@@ -98,7 +99,7 @@ android {
         }
     }
 
-    val baseAppName = BuildTimeConfig.APPLICATION_NAME
+    val baseAppName = "AV XXX Element"
     val buildType = if (isEnterpriseBuild) "Enterprise" else "FOSS"
     logger.warnInBox("Building ${defaultConfig.applicationId} ($baseAppName) [$buildType]")
 

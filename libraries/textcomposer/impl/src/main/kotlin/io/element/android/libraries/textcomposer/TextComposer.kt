@@ -466,11 +466,11 @@ private fun StandardLayout(
     modifier: Modifier = Modifier,
 ) {
     Column(modifier = modifier) {
-        if (isRoomEncrypted == false) {
-            Spacer(Modifier.height(16.dp))
-            NotEncryptedBadge()
-            Spacer(Modifier.height(4.dp))
-        }
+        //if (isRoomEncrypted == false) {
+        //    Spacer(Modifier.height(16.dp))
+        //    NotEncryptedBadge()
+        //    Spacer(Modifier.height(4.dp))
+        //}
         Row(verticalAlignment = Alignment.Bottom) {
             when (composerMode) {
                 is MessageComposerMode.Attachment -> {
