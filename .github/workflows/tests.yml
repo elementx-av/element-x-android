@@ -76,10 +76,7 @@ jobs:
         run: ./gradlew :app:testGplayDebugUnitTest testDebugUnitTest -x :tests:konsist:testDebugUnitTest $CI_GRADLE_ARG_PROPERTIES
 
       - name: ⚙️ Run screenshot tests
-        run: ./gradlew :tests:uitests:verifyPaparazziDebug $CI_GRADLE_ARG_PROPERTIES
-
-      - name: ⚙️ Run Compound screenshot tests
-        run: ./gradlew :libraries:compound:verifyRoborazziDebug $CI_GRADLE_ARG_PROPERTIES
+        run: ./gradlew verifyPaparazziDebug $CI_GRADLE_ARG_PROPERTIES
 
       - name: ⚙️ Generate kover coverage report
         run: ./gradlew :koverXmlReportMerged :koverHtmlReportMerged :koverVerifyAll -x testDebugUnitTest $CI_GRADLE_ARG_PROPERTIES
@@ -103,7 +100,6 @@ jobs:
           name: tests-and-screenshot-tests-results
           path: |
             **/build/paparazzi/failures/
-            **/build/roborazzi/failures/
             **/build/reports/tests/*UnitTest/
 
       - name: 🚫 Modify summary on error
@@ -117,7 +113,7 @@ jobs:
 
       # https://github.com/codecov/codecov-action
       - name: ☂️ Upload coverage reports to codecov
-        uses: codecov/codecov-action@fb8b3582c8e4def4969c97caa2f19720cb33a72f # v7.0.0
+        uses: codecov/codecov-action@303a32d7a59b442fa8d48b6a1cc6825c09c847a5 # v7.1.1
         with:
           fail_ci_if_error: true
           token: ${{ secrets.CODECOV_TOKEN }}
