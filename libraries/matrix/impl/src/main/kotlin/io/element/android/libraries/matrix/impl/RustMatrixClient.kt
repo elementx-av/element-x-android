@@ -127,8 +127,6 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withContext
 import kotlinx.coroutines.withTimeout
-import org.matrix.rustcomponents.sdk.AuthData
-import org.matrix.rustcomponents.sdk.AuthDataPasswordDetails
 import org.matrix.rustcomponents.sdk.BeaconInfoListener
 import org.matrix.rustcomponents.sdk.BeaconInfoUpdate
 import org.matrix.rustcomponents.sdk.Client
@@ -530,7 +528,7 @@ class RustMatrixClient(
      * Store the user profile in the session storage, including a base64 encoded thumbnail of the avatar,
      * so that the avatar can be rendered without having to use this client.
      */
-    private suspend fun storeUserProfile(matrixUser: MatrixUser) {
+    private suspend fun storeUserProfile(matrixUser: MatrixUser) = withContext(sessionDispatcher) {
         val avatarUrl = matrixUser.avatarUrl
         val storedSession = sessionStore.getSession(sessionId.value)
         val avatarData = when {
@@ -794,33 +792,10 @@ class RustMatrixClient(
         clientDelegateTaskHandle?.cancelAndDestroy()
         clientDelegateTaskHandle = null
         runCatchingExceptions {
-            // First call without AuthData, should fail
-            val firstAttempt = runCatchingExceptions {
-                innerClient.deactivateAccount(
-                    authData = null,
-                    eraseData = eraseData,
-                )
-            }
-            if (firstAttempt.isFailure) {
-                Timber.w(firstAttempt.exceptionOrNull(), "Expected failure, try again")
-                // This is expected, try again with the password
-                runCatchingExceptions {
-                    innerClient.deactivateAccount(
-                        authData = AuthData.Password(
-                            passwordDetails = AuthDataPasswordDetails(
-                                identifier = sessionId.value,
-                                password = password,
-                            ),
-                        ),
-                        eraseData = eraseData,
-                    )
-                }.onFailure {
-                    Timber.e(it, "Failed to deactivate account")
-                    // If the deactivation failed we need to restore the delegate
-                    clientDelegateTaskHandle = innerClient.setDelegate(sessionDelegate)
-                    throw it
-                }
-            }
+            innerClient.deactivateAccount(
+                password = password,
+                eraseData = eraseData,
+            )
             destroy()
             deleteSessionDirectory()
             sessionStore.removeSession(sessionId.value)
@@ -1022,6 +997,10 @@ class RustMatrixClient(
 
     override fun homeserverCapabilities(): HomeserverCapabilitiesProvider {
         return RustHomeserverCapabilitiesProvider(innerClient.homeserverCapabilities())
+    }
+
+    override fun totalUnreadCount(): Result<Long> = runCatchingExceptions {
+        innerClient.totalUnreadNotifications().toLong()
     }
 
     private fun scheduleBackgroundSearchBackfill() {
