@@ -17,6 +17,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshotFlow
 import io.element.android.features.location.impl.common.MapDefaults
 import kotlinx.coroutines.flow.distinctUntilChanged
+import org.maplibre.compose.camera.CameraAnimation
 import org.maplibre.compose.location.LocationMeasurement
 import org.maplibre.compose.map.MapState
 import kotlin.math.abs
@@ -71,13 +72,13 @@ internal fun UserLocationTrackingEffect(
     ) { location ->
         val target = location?.position ?: return@UserLocationTrackingEffect
         val position = mapState.cameraPosition.copy(
-            target = target,
+            center = target,
             // Force pointing to NORTH
             bearing = 0.0,
             zoom = mapState.cameraPosition.zoom.coerceAtLeast(MapDefaults.DEFAULT_ZOOM)
         )
         if (hasPositioned) {
-            mapState.animateCameraPosition(position)
+            mapState.animateCamera(position.toCameraUpdate(), CameraAnimation.Fly.Standard)
         } else {
             mapState.setCameraPosition(position)
             hasPositioned = true

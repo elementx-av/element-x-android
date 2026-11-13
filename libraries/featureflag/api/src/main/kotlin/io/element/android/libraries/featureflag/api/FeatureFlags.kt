@@ -151,7 +151,7 @@ enum class FeatureFlags(
         key = "feature.message_search",
         title = "Message search",
         description = "Index messages locally so they can be searched. Only messages received while enabled are indexed.",
-        defaultValue = { false },
+        defaultValue = { true },
         isFinished = false,
     ),
     NewTimelineEventRenderer(
@@ -169,13 +169,27 @@ enum class FeatureFlags(
         defaultValue = { false },
         isFinished = false,
     ),
-    ShowAllActivityInRoomList(
-        key = "feature.show_all_activity_in_room_list",
-        title = "Show all activity in room list",
-        description = "Show all activity indicators in the room list, using unread messages instead of notifications.",
-        defaultValue = { true },
-        // To hide it from the developer options, since it's displayed in the notification settings instead
-        isFinished = true,
-        isInLabs = false,
+    ReceiveNotificationsFromOtherSignedInAccounts(
+        key = "feature.receive_notifications_from_other_signed_in_accounts",
+        title = "Receive notifications from other signed-in accounts",
+        description = "Receive push notifications for events sent from other signed-in accounts on this device. " +
+            "Note this may result in duplicate notifications if you have multiple accounts signed in on the same device, it should only be used for testing.",
+        defaultValue = { false },
+        isFinished = false,
     )
+}
+
+/**
+ * Feature flag to show all activity indicators in the room list, using unread messages instead of notifications.
+ *
+ * This is separate from the [FeatureFlags] enum because it is not a feature flag that can be toggled in developer options,
+ * but rather a setting that can be toggled in the app settings.
+ */
+object ShowAllActivityInRoomListFeature : Feature {
+    override val key: String = "feature.show_all_activity_in_room_list"
+    override val title: String = "Show all activity in room list"
+    override val description: String = "Show all activity indicators in the room list, using unread messages instead of notifications."
+    override val defaultValue: (BuildMeta) -> Boolean = { true }
+    override val isFinished: Boolean = false
+    override val isInLabs: Boolean = false
 }

@@ -36,6 +36,7 @@ dependencies {
     implementation(projects.libraries.architecture)
     implementation(projects.libraries.di)
     implementation(projects.libraries.featureflag.api)
+    implementation(projects.features.lockscreen.api)
     implementation(projects.libraries.matrix.api)
     implementation(projects.libraries.preferences.api)
     // For NotificationIdProvider: the ongoing-call notification id is shared with the WebView call's
@@ -47,8 +48,6 @@ dependencies {
     testCommonDependencies(libs)
     testImplementation(libs.element.call.test)
     testImplementation(projects.features.call.test)
-    testImplementation(projects.libraries.featureflag.test)
     testImplementation(projects.libraries.matrix.test)
-    testImplementation(projects.libraries.preferences.test)
     testImplementation(projects.services.appnavstate.test)
 }
